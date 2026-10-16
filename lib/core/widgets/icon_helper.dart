@@ -1,0 +1,70 @@
+import 'package:flutter/material.dart';
+
+IconData getIconData(String? iconName) {
+  switch (iconName?.toLowerCase()) {
+    case 'food':
+    case 'restaurant':
+      return Icons.restaurant_rounded;
+    case 'drinks':
+    case 'local_bar':
+      return Icons.local_cafe_rounded;
+    case 'outings':
+    case 'celebration':
+      return Icons.celebration_rounded;
+    case 'partner':
+    case 'favorite':
+      return Icons.favorite_rounded;
+    case 'hygiene':
+    case 'clean_hands':
+      return Icons.sanitizer_rounded;
+    case 'transport':
+    case 'directions_bus':
+      return Icons.directions_bus_rounded;
+    case 'fuel':
+    case 'local_gas_station':
+      return Icons.local_gas_station_rounded;
+    case 'moto_maintenance':
+    case 'build':
+      return Icons.two_wheeler_rounded;
+    case 'moto_documents':
+    case 'description':
+      return Icons.description_rounded;
+    case 'debt_payment':
+    case 'credit_card':
+      return Icons.credit_score_rounded;
+    case 'savings_contribution':
+    case 'savings':
+      return Icons.savings_rounded;
+    case 'health':
+    case 'medical_services':
+      return Icons.medical_services_rounded;
+    case 'education':
+    case 'school':
+      return Icons.school_rounded;
+    case 'salary':
+    case 'work':
+      return Icons.work_rounded;
+    case 'drinks_business':
+    case 'store':
+      return Icons.storefront_rounded;
+    case 'deliveries':
+    case 'delivery_dining':
+      return Icons.delivery_dining_rounded;
+    case 'moto_rental':
+      return Icons.moped_rounded;
+    case 'family_support':
+    case 'people':
+      return Icons.people_rounded;
+    case 'external_services':
+    case 'handshake':
+      return Icons.handshake_rounded;
+    case 'loan_collection':
+    case 'payments':
+      return Icons.payments_rounded;
+    case 'transfer':
+    case 'swap_horiz':
+      return Icons.swap_horiz_rounded;
+    default:
+      return Icons.category_rounded;
+  }
+}

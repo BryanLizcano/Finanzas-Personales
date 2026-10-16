@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/widget_background"
+    android:padding="12dp"
+    android:gravity="center">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Disponible seguro"
+        android:textSize="11sp"
+        android:textColor="#51625F" />
+
+    <TextView
+        android:id="@+id/tv_safe_available"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="$ 0"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        android:textColor="#0F766E" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="#E5EDEB"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="6dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Balance del mes"
+        android:textSize="11sp"
+        android:textColor="#51625F" />
+
+    <TextView
+        android:id="@+id/tv_monthly_balance"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="$ 0"
+        android:textSize="14sp"
+        android:textStyle="bold"
+        android:textColor="#14201E" />
+</LinearLayout>
