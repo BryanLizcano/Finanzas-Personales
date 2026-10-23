@@ -213,6 +213,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                   children: [
                     Expanded(
                       child: DropdownButtonFormField<AccountType>(
+                        isExpanded: true,
                         initialValue: _accountType,
                         decoration: InputDecoration(
                           labelText: l10n.accountType,
@@ -220,15 +221,24 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
                         items: [
                           DropdownMenuItem(
                             value: AccountType.cash,
-                            child: Text(l10n.accountTypeCash),
+                            child: Text(
+                              l10n.accountTypeCash,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                           DropdownMenuItem(
                             value: AccountType.bank,
-                            child: Text(l10n.accountTypeBank),
+                            child: Text(
+                              l10n.accountTypeBank,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                           DropdownMenuItem(
                             value: AccountType.savings,
-                            child: Text(l10n.accountTypeSavings),
+                            child: Text(
+                              l10n.accountTypeSavings,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ],
                         onChanged: (val) {

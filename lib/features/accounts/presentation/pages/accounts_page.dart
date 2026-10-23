@@ -159,6 +159,7 @@ class AccountsPage extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<AccountType>(
+                isExpanded: true,
                 initialValue: selectedType,
                 decoration: InputDecoration(labelText: l10n.accountType),
                 items: [
@@ -248,6 +249,7 @@ class AccountsPage extends ConsumerWidget {
               ),
               const SizedBox(height: 8),
               DropdownButtonFormField<AccountType>(
+                isExpanded: true,
                 initialValue: selectedType,
                 decoration: InputDecoration(labelText: l10n.accountType),
                 items: [

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../l10n/generated/app_localizations.dart';
@@ -13,16 +14,36 @@ class AppShell extends StatelessWidget {
     final l10n = AppLocalizations.of(context);
 
     return Scaffold(
-      body: navigationShell,
+      body: TweenAnimationBuilder<double>(
+        key: ValueKey<int>(navigationShell.currentIndex),
+        tween: Tween<double>(begin: 0.0, end: 1.0),
+        duration: const Duration(milliseconds: 240),
+        curve: Curves.easeOutCubic,
+        builder: (context, value, child) {
+          return Opacity(
+            opacity: value,
+            child: Transform.translate(
+              offset: Offset(0, (1 - value) * 8),
+              child: child,
+            ),
+          );
+        },
+        child: navigationShell,
+      ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/add-transaction'),
+        onPressed: () {
+          HapticFeedback.lightImpact();
+          context.push('/add-transaction');
+        },
         tooltip: l10n.navAdd,
         child: const Icon(Icons.add_rounded, size: 28),
       ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: navigationShell.currentIndex,
+        animationDuration: const Duration(milliseconds: 350),
         onDestinationSelected: (index) {
+          HapticFeedback.selectionClick();
           navigationShell.goBranch(
             index,
             initialLocation: index == navigationShell.currentIndex,

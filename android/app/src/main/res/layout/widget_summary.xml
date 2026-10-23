@@ -4,45 +4,85 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@drawable/widget_background"
-    android:padding="12dp"
-    android:gravity="center">
+    android:padding="12dp">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Disponible seguro"
-        android:textSize="11sp"
-        android:textColor="#51625F" />
-
-    <TextView
-        android:id="@+id/tv_safe_available"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="$ 0"
-        android:textSize="16sp"
-        android:textStyle="bold"
-        android:textColor="#0F766E" />
-
-    <View
+    <LinearLayout
+        android:id="@+id/summary_header_container"
         android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="#E5EDEB"
-        android:layout_marginTop="6dp"
-        android:layout_marginBottom="6dp" />
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:orientation="vertical"
+        android:gravity="center_vertical"
+        android:paddingStart="4dp"
+        android:paddingEnd="4dp">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Balance del mes"
-        android:textSize="11sp"
-        android:textColor="#51625F" />
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Disponible seguro"
+            android:textSize="11sp"
+            android:textColor="#64748B" />
 
-    <TextView
-        android:id="@+id/tv_monthly_balance"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="$ 0"
-        android:textSize="14sp"
-        android:textStyle="bold"
-        android:textColor="#14201E" />
+        <TextView
+            android:id="@+id/tv_safe_available"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="$ 0"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:textColor="#0F172A"
+            android:layout_marginTop="2dp" />
+
+        <TextView
+            android:id="@+id/tv_monthly_balance"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="$ 0"
+            android:textSize="12sp"
+            android:textColor="#0F766E"
+            android:layout_marginTop="2dp" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="38dp"
+        android:orientation="horizontal"
+        android:layout_marginTop="6dp">
+
+        <LinearLayout
+            android:id="@+id/btn_summary_income"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@drawable/bg_widget_income"
+            android:gravity="center"
+            android:layout_marginEnd="4dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="+ Ingreso"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+
+        <LinearLayout
+            android:id="@+id/btn_summary_expense"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@drawable/bg_widget_expense"
+            android:gravity="center"
+            android:layout_marginStart="4dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="- Gasto"
+                android:textColor="#FFFFFF"
+                android:textSize="12sp"
+                android:textStyle="bold" />
+        </LinearLayout>
+    </LinearLayout>
 </LinearLayout>

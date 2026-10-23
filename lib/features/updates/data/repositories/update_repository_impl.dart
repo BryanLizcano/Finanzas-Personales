@@ -15,9 +15,9 @@ class UpdateRepositoryImpl implements UpdateRepository {
   final String owner;
   final String repo;
 
-  // Placeholder constants as required by docs/12_agente_logica.md
-  static const defaultOwner = 'TODO_OWNER';
-  static const defaultRepo = 'TODO_REPO';
+  // GitHub repository configuration for In-App Updates
+  static const defaultOwner = 'BryanLizcano';
+  static const defaultRepo = 'Finanzas-Personales';
 
   UpdateRepositoryImpl({
     http.Client? client,

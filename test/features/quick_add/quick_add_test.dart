@@ -51,6 +51,18 @@ void main() {
       expect(payload.amount, isNull);
     });
 
+    test('parses transfer deep link and internal route link', () {
+      final resTransfer = parser('finanzas://quick-add?kind=transfer');
+      expect(resTransfer.isOk, isTrue);
+      expect(resTransfer.valueOrNull!.kind, TransactionKind.transfer);
+      expect(resTransfer.valueOrNull!.categoryKey, isNull);
+
+      final resInternal = parser('/quick-add?kind=expense&cat=other_expense');
+      expect(resInternal.isOk, isTrue);
+      expect(resInternal.valueOrNull!.kind, TransactionKind.expense);
+      expect(resInternal.valueOrNull!.categoryKey, 'other_expense');
+    });
+
     test('rejects deep links with invalid scheme or host', () {
       final invalidScheme = parser('https://quick-add?kind=expense');
       expect(invalidScheme.isError, isTrue);

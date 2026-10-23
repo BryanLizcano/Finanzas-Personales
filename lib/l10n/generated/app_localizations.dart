@@ -101,7 +101,7 @@ abstract class AppLocalizations {
   /// No description provided for @appTitle.
   ///
   /// In es, this message translates to:
-  /// **'Finanzas Personales'**
+  /// **'Control de finanzas'**
   String get appTitle;
 
   /// No description provided for @cancel.

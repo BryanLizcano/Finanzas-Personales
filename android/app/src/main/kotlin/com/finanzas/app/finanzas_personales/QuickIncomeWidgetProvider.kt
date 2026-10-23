@@ -18,34 +18,31 @@ class QuickIncomeWidgetProvider : AppWidgetProvider() {
             val views = RemoteViews(context.packageName, R.layout.widget_quick_income)
 
             views.setOnClickPendingIntent(
-                R.id.btn_income_salary,
-                createDeepLinkIntent(context, "income", "salary")
+                R.id.btn_income_quick,
+                createDeepLinkIntent(context, "income", "salary", 201)
             )
             views.setOnClickPendingIntent(
-                R.id.btn_income_business,
-                createDeepLinkIntent(context, "income", "drinks_business")
-            )
-            views.setOnClickPendingIntent(
-                R.id.btn_income_deliveries,
-                createDeepLinkIntent(context, "income", "deliveries")
-            )
-            views.setOnClickPendingIntent(
-                R.id.btn_income_other,
-                createDeepLinkIntent(context, "income", "other_income")
+                R.id.btn_expense_quick,
+                createDeepLinkIntent(context, "expense", "food", 202)
             )
 
             appWidgetManager.updateAppWidget(appWidgetId, views)
         }
     }
 
-    private fun createDeepLinkIntent(context: Context, kind: String, cat: String): PendingIntent {
+    private fun createDeepLinkIntent(
+        context: Context,
+        kind: String,
+        cat: String,
+        requestCode: Int
+    ): PendingIntent {
         val uri = Uri.parse("finanzas://quick-add?kind=$kind&cat=$cat")
-        val intent = Intent(Intent.ACTION_VIEW, uri).apply {
+        val intent = Intent(Intent.ACTION_VIEW, uri, context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }
         return PendingIntent.getActivity(
             context,
-            cat.hashCode(),
+            requestCode,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )

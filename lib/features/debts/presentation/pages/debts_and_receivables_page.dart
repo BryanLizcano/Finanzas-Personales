@@ -464,6 +464,7 @@ class _DebtsView extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<int>(
+                isExpanded: true,
                 initialValue: selectedAccountId,
                 decoration: InputDecoration(
                   labelText: l10n.transactionSourceAccount,
@@ -797,6 +798,7 @@ class _ReceivablesView extends ConsumerWidget {
               ),
               const SizedBox(height: 12),
               DropdownButtonFormField<int>(
+                isExpanded: true,
                 initialValue: selectedAccountId,
                 decoration: InputDecoration(
                   labelText: l10n.transactionTargetAccount,

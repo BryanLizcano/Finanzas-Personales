@@ -84,33 +84,52 @@ class NumericKeypad extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final hasDecimals = currency.decimals > 0;
+    final rows = <List<Widget>>[
+      [
+        _buildKey(context, '1'),
+        _buildKey(context, '2'),
+        _buildKey(context, '3'),
+      ],
+      [
+        _buildKey(context, '4'),
+        _buildKey(context, '5'),
+        _buildKey(context, '6'),
+      ],
+      [
+        _buildKey(context, '7'),
+        _buildKey(context, '8'),
+        _buildKey(context, '9'),
+      ],
+      [
+        hasDecimals ? _buildKey(context, '.') : _buildKey(context, '00'),
+        _buildKey(context, '0'),
+        _buildActionKey(
+          context,
+          Icons.backspace_outlined,
+          onBackspace,
+          onLongPress: onClear,
+        ),
+      ],
+    ];
 
-    return AspectRatio(
-      aspectRatio: 1.25,
-      child: GridView.count(
-        crossAxisCount: 3,
-        physics: const NeverScrollableScrollPhysics(),
-        crossAxisSpacing: 8,
-        mainAxisSpacing: 8,
-        childAspectRatio: 1.5,
+    return SizedBox(
+      height: 240,
+      child: Column(
         children: [
-          _buildKey(context, '1'),
-          _buildKey(context, '2'),
-          _buildKey(context, '3'),
-          _buildKey(context, '4'),
-          _buildKey(context, '5'),
-          _buildKey(context, '6'),
-          _buildKey(context, '7'),
-          _buildKey(context, '8'),
-          _buildKey(context, '9'),
-          hasDecimals ? _buildKey(context, '.') : _buildKey(context, '00'),
-          _buildKey(context, '0'),
-          _buildActionKey(
-            context,
-            Icons.backspace_outlined,
-            onBackspace,
-            onLongPress: onClear,
-          ),
+          for (int r = 0; r < rows.length; r++) ...[
+            if (r > 0) const SizedBox(height: 8),
+            Expanded(
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  for (int c = 0; c < rows[r].length; c++) ...[
+                    if (c > 0) const SizedBox(width: 8),
+                    Expanded(child: rows[r][c]),
+                  ],
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );

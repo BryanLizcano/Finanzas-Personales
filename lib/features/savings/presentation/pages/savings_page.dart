@@ -342,6 +342,7 @@ class SavingsPage extends ConsumerWidget {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<int>(
+                  isExpanded: true,
                   initialValue: selectedSourceId,
                   decoration: InputDecoration(
                     labelText: l10n.transactionSourceAccount,
@@ -349,7 +350,10 @@ class SavingsPage extends ConsumerWidget {
                   items: accounts.map((a) {
                     return DropdownMenuItem(
                       value: a.account.id,
-                      child: Text('${a.account.name} (${a.balance.format()})'),
+                      child: Text(
+                        '${a.account.name} (${a.balance.format()})',
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     );
                   }).toList(),
                   onChanged: (val) =>
@@ -357,6 +361,7 @@ class SavingsPage extends ConsumerWidget {
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<int>(
+                  isExpanded: true,
                   initialValue: selectedSavingsId,
                   decoration: InputDecoration(
                     labelText: l10n.transactionTargetAccount,
@@ -364,7 +369,10 @@ class SavingsPage extends ConsumerWidget {
                   items: savingsAccounts.map((a) {
                     return DropdownMenuItem(
                       value: a.account.id,
-                      child: Text('${a.account.name} (${a.balance.format()})'),
+                      child: Text(
+                        '${a.account.name} (${a.balance.format()})',
+                        overflow: TextOverflow.ellipsis,
+                      ),
                     );
                   }).toList(),
                   onChanged: (val) =>

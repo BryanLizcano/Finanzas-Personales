@@ -101,7 +101,7 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage> {
                         ),
                         const SizedBox(width: 8),
                         _filterChip(
-                          label: l10n.transactionFilterExpense,
+                          label: 'Salidas (${l10n.transactionFilterExpense})',
                           isSelected: _selectedKind == TransactionKind.expense,
                           onSelected: () => setState(
                             () => _selectedKind = TransactionKind.expense,
@@ -110,7 +110,7 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage> {
                         ),
                         const SizedBox(width: 8),
                         _filterChip(
-                          label: l10n.transactionFilterIncome,
+                          label: 'Entradas (${l10n.transactionFilterIncome})',
                           isSelected: _selectedKind == TransactionKind.income,
                           onSelected: () => setState(
                             () => _selectedKind = TransactionKind.income,
@@ -158,9 +158,9 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage> {
                         .format(tx.occurredAt);
                     String header;
                     if (txDateStr == todayStr) {
-                      header = 'Hoy';
+                      header = locale == 'en' ? 'Today' : 'Hoy';
                     } else if (txDateStr == yesterdayStr) {
-                      header = 'Ayer';
+                      header = locale == 'en' ? 'Yesterday' : 'Ayer';
                     } else {
                       header = DateFormat.yMMMMd(locale).format(tx.occurredAt);
                     }
@@ -234,7 +234,9 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage> {
                                     ? Color(cat.color)
                                     : null,
                                 accountName: acc?.account.name,
+                                accountType: acc?.account.type,
                                 toAccountName: toAcc?.account.name,
+                                toAccountType: toAcc?.account.type,
                                 onDismissed: () async {
                                   // Soft delete
                                   final deleteTx = ref.read(
@@ -243,19 +245,21 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage> {
                                   await deleteTx(tx.id);
 
                                   if (context.mounted) {
-                                    ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text(l10n.transactionDeleted),
-                                        action: SnackBarAction(
-                                          label: l10n.undo,
-                                          onPressed: () {
-                                            ref.read(
-                                              restoreTransactionUseCaseProvider,
-                                            )(tx.id);
-                                          },
+                                    ScaffoldMessenger.of(context)
+                                      ..hideCurrentSnackBar()
+                                      ..showSnackBar(
+                                        SnackBar(
+                                          content: Text(l10n.transactionDeleted),
+                                          action: SnackBarAction(
+                                            label: l10n.undo,
+                                            onPressed: () {
+                                              ref.read(
+                                                restoreTransactionUseCaseProvider,
+                                              )(tx.id);
+                                            },
+                                          ),
                                         ),
-                                      ),
-                                    );
+                                      );
                                   }
                                 },
                               ),

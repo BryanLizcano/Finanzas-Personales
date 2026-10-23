@@ -11,7 +11,11 @@ import 'package:finanzas_personales/core/widgets/charts.dart';
 import 'package:finanzas_personales/core/widgets/empty_state_widget.dart';
 import 'package:finanzas_personales/core/widgets/error_state_widget.dart';
 import 'package:finanzas_personales/core/widgets/numeric_keypad.dart';
+import 'package:finanzas_personales/core/widgets/quick_actions_widget.dart';
 import 'package:finanzas_personales/core/widgets/skeleton_loading.dart';
+import 'package:finanzas_personales/core/widgets/transaction_tile.dart';
+import 'package:finanzas_personales/features/accounts/domain/entities/account.dart';
+import 'package:finanzas_personales/features/transactions/domain/entities/transaction.dart';
 import 'package:finanzas_personales/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -286,6 +290,93 @@ void main() {
       expect(find.byType(MonthlyBarChartWidget), findsOneWidget);
       expect(find.text('Alimentación'), findsOneWidget);
       expect(find.text('Transporte'), findsOneWidget);
+    });
+
+    testWidgets('QuickActionsWidget renders 4 minimalist cards and handles taps', (
+      tester,
+    ) async {
+      String? lastAction;
+      await tester.pumpWidget(
+        _buildTestApp(
+          QuickActionsWidget(
+            onQuickEntry: () => lastAction = 'quick',
+            onNewTransfer: () => lastAction = 'transfer',
+            onNewIncome: () => lastAction = 'income',
+            onNewExpense: () => lastAction = 'expense',
+          ),
+        ),
+      );
+
+      expect(find.text('Entrada rápida'), findsOneWidget);
+      expect(find.text('Nueva transferencia'), findsOneWidget);
+      expect(find.text('Ingresos nuevos'), findsOneWidget);
+      expect(find.text('Nuevo gasto'), findsOneWidget);
+
+      await tester.tap(find.text('Entrada rápida'));
+      expect(lastAction, 'quick');
+
+      await tester.tap(find.text('Nueva transferencia'));
+      expect(lastAction, 'transfer');
+
+      await tester.tap(find.text('Ingresos nuevos'));
+      expect(lastAction, 'income');
+
+      await tester.tap(find.text('Nuevo gasto'));
+      expect(lastAction, 'expense');
+    });
+
+    testWidgets('TransactionTile highlights Entrada/Salida and Efectivo/Cuenta', (
+      tester,
+    ) async {
+      final now = DateTime(2026, 10, 22);
+      final expenseTx = TransactionEntity(
+        id: 1,
+        kind: TransactionKind.expense,
+        amount: 25000,
+        accountId: 1,
+        categoryId: 1,
+        occurredAt: now,
+        createdAt: now,
+        updatedAt: now,
+      );
+      final incomeTx = TransactionEntity(
+        id: 2,
+        kind: TransactionKind.income,
+        amount: 180000,
+        accountId: 2,
+        categoryId: 2,
+        occurredAt: now,
+        createdAt: now,
+        updatedAt: now,
+      );
+
+      await tester.pumpWidget(
+        _buildTestApp(
+          Column(
+            children: [
+              TransactionTile(
+                transaction: expenseTx,
+                currency: Currency.cop,
+                categoryTitle: 'Restaurantes',
+                accountName: 'Billetera',
+                accountType: AccountType.cash,
+              ),
+              TransactionTile(
+                transaction: incomeTx,
+                currency: Currency.cop,
+                categoryTitle: 'Sueldo',
+                accountName: 'Bancolombia',
+                accountType: AccountType.bank,
+              ),
+            ],
+          ),
+        ),
+      );
+
+      expect(find.text('Salida'), findsOneWidget);
+      expect(find.text('Entrada'), findsOneWidget);
+      expect(find.textContaining('Efectivo'), findsOneWidget);
+      expect(find.textContaining('Cuenta • Bancolombia'), findsOneWidget);
     });
   });
 }

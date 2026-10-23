@@ -111,7 +111,7 @@ class _UpdatesPageState extends ConsumerState<UpdatesPage> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Finanzas Personales v1.0.0',
+                    'Finanzas Personales v${updateAsync.value?.currentVersion ?? '1.1.0'}',
                     style: Theme.of(context).textTheme.titleLarge
                         ?.copyWith(fontWeight: FontWeight.bold),
                   ),

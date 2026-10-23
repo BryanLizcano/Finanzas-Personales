@@ -1,14 +1,25 @@
+import 'package:flutter/services.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../domain/services/widget_data_service.dart';
 
 class SharedPreferencesWidgetDataService implements WidgetDataService {
+  static const _widgetChannel = MethodChannel('com.finanzas.app/widgets');
+
   final SharedPreferences? _prefs;
 
   const SharedPreferencesWidgetDataService([this._prefs]);
 
   Future<SharedPreferences> _getPrefs() async {
     return _prefs ?? await SharedPreferences.getInstance();
+  }
+
+  void _notifyNativeWidgets() {
+    try {
+      _widgetChannel.invokeMethod<void>('updateWidgets').ignore();
+    } catch (_) {
+      // Ignore in unit tests or non-Android platforms
+    }
   }
 
   @override
@@ -19,6 +30,7 @@ class SharedPreferencesWidgetDataService implements WidgetDataService {
     final prefs = await _getPrefs();
     await prefs.setInt('widget_safe_available', safeAvailable);
     await prefs.setInt('widget_monthly_balance', monthlyBalance);
+    _notifyNativeWidgets();
   }
 
   @override
@@ -29,5 +41,6 @@ class SharedPreferencesWidgetDataService implements WidgetDataService {
     final prefs = await _getPrefs();
     await prefs.setStringList('widget_expense_categories', expenseCategories);
     await prefs.setStringList('widget_income_categories', incomeCategories);
+    _notifyNativeWidgets();
   }
 }

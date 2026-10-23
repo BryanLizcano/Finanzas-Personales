@@ -4,42 +4,86 @@
     android:layout_height="match_parent"
     android:orientation="horizontal"
     android:background="@drawable/widget_background"
-    android:padding="8dp"
-    android:gravity="center">
+    android:padding="10dp">
 
-    <Button
-        android:id="@+id/btn_income_salary"
+    <!-- Ingresos nuevos (Turquesa/Menta) -->
+    <LinearLayout
+        android:id="@+id/btn_income_quick"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:layout_weight="1"
-        android:text="Sueldo"
-        android:textSize="11sp"
-        android:layout_margin="2dp" />
+        android:orientation="vertical"
+        android:background="@drawable/bg_widget_income"
+        android:padding="12dp"
+        android:layout_marginEnd="5dp">
 
-    <Button
-        android:id="@+id/btn_income_business"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="Negocio"
-        android:textSize="11sp"
-        android:layout_margin="2dp" />
+        <FrameLayout
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:background="@drawable/bg_widget_icon_circle">
 
-    <Button
-        android:id="@+id/btn_income_deliveries"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="Domicilio"
-        android:textSize="11sp"
-        android:layout_margin="2dp" />
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_widget_plus"
+                android:contentDescription="Ingresos nuevos" />
+        </FrameLayout>
 
-    <Button
-        android:id="@+id/btn_income_other"
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Ingresos nuevos"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:singleLine="true"
+            android:ellipsize="end" />
+    </LinearLayout>
+
+    <!-- Nuevo gasto (Coral/Rojo) -->
+    <LinearLayout
+        android:id="@+id/btn_expense_quick"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:layout_weight="1"
-        android:text="Otro"
-        android:textSize="11sp"
-        android:layout_margin="2dp" />
+        android:orientation="vertical"
+        android:background="@drawable/bg_widget_expense"
+        android:padding="12dp"
+        android:layout_marginStart="5dp">
+
+        <FrameLayout
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:background="@drawable/bg_widget_icon_circle">
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_widget_minus"
+                android:contentDescription="Nuevo gasto" />
+        </FrameLayout>
+
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Nuevo gasto"
+            android:textColor="#FFFFFF"
+            android:textSize="13sp"
+            android:textStyle="bold"
+            android:singleLine="true"
+            android:ellipsize="end" />
+    </LinearLayout>
+
 </LinearLayout>

@@ -137,4 +137,28 @@ class TransactionFilter {
     this.searchQuery,
     this.includeDeleted = false,
   });
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is TransactionFilter &&
+          runtimeType == other.runtimeType &&
+          startDate == other.startDate &&
+          endDate == other.endDate &&
+          accountId == other.accountId &&
+          categoryId == other.categoryId &&
+          kind == other.kind &&
+          searchQuery == other.searchQuery &&
+          includeDeleted == other.includeDeleted;
+
+  @override
+  int get hashCode => Object.hash(
+    startDate,
+    endDate,
+    accountId,
+    categoryId,
+    kind,
+    searchQuery,
+    includeDeleted,
+  );
 }

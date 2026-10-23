@@ -14,7 +14,13 @@ class ParseQuickAddLink {
       );
     }
 
-    if (uri.scheme != 'finanzas' || uri.host != 'quick-add') {
+    final isCustomScheme =
+        uri.scheme == 'finanzas' &&
+        (uri.host == 'quick-add' || uri.path == '/quick-add');
+    final isInternalRoute =
+        uri.scheme.isEmpty && uri.path == '/quick-add';
+
+    if (!isCustomScheme && !isInternalRoute) {
       return const Result.error(
         Failure(
           FailureCode.invalidQuickAddLink,
@@ -24,9 +30,11 @@ class ParseQuickAddLink {
     }
 
     final kindParam = uri.queryParameters['kind']?.toLowerCase();
-    final kind = (kindParam == 'income')
-        ? TransactionKind.income
-        : TransactionKind.expense;
+    final kind = switch (kindParam) {
+      'income' => TransactionKind.income,
+      'transfer' => TransactionKind.transfer,
+      _ => TransactionKind.expense,
+    };
 
     final catParam = uri.queryParameters['cat']?.trim();
     final categoryKey = (catParam != null && catParam.isNotEmpty)

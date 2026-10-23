@@ -10,7 +10,7 @@ class AppLocalizationsEs extends AppLocalizations {
   AppLocalizationsEs([String locale = 'es']) : super(locale);
 
   @override
-  String get appTitle => 'Finanzas Personales';
+  String get appTitle => 'Control de finanzas';
 
   @override
   String get cancel => 'Cancelar';

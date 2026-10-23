@@ -5,8 +5,10 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/theme/finance_colors.dart';
 import '../../../../core/errors/failure_message.dart';
 import '../../../../core/money/money.dart';
+import '../../../../core/widgets/animated_count.dart';
 import '../../../../core/widgets/balance_card.dart';
 import '../../../../core/widgets/error_state_widget.dart';
+import '../../../../core/widgets/quick_actions_widget.dart';
 import '../../../../core/widgets/skeleton_loading.dart';
 import '../../../../core/widgets/transaction_tile.dart';
 import '../../../../l10n/generated/app_localizations.dart';
@@ -16,6 +18,7 @@ import '../../../budget/presentation/providers/budget_providers.dart';
 import '../../../categories/domain/entities/category.dart';
 import '../../../categories/presentation/providers/categories_providers.dart';
 import '../../../debts/presentation/providers/debts_providers.dart';
+import '../../../quick_add/presentation/providers/quick_add_providers.dart';
 import '../../../receivables/presentation/providers/receivables_providers.dart';
 import '../../../savings/presentation/providers/savings_providers.dart';
 import '../../../settings/presentation/providers/settings_providers.dart';
@@ -51,12 +54,63 @@ class HomeDashboardPage extends ConsumerWidget {
     );
     final allCatsAsync = ref.watch(allCategoriesProvider);
 
+    // Keep Android SummaryWidget in sync whenever safe available or monthly balance updates
+    void syncSummaryWidget() {
+      final safeUnits = ref.read(safeAvailableProvider).asData?.value.safeAvailable;
+      final monthlyBalUnits = ref
+          .read(monthlySummaryProvider((year: currentYear, month: currentMonth)))
+          .asData
+          ?.value
+          .balance;
+      if (safeUnits != null && monthlyBalUnits != null) {
+        ref.read(updateWidgetDataUseCaseProvider)(
+          safeAvailable: safeUnits,
+          monthlyBalance: monthlyBalUnits,
+        ).ignore();
+      }
+    }
+
+    ref.listen(safeAvailableProvider, (_, next) {
+      if (next.hasValue) syncSummaryWidget();
+    });
+    ref.listen(
+      monthlySummaryProvider((year: currentYear, month: currentMonth)),
+      (_, next) {
+        if (next.hasValue) syncSummaryWidget();
+      },
+    );
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          l10n.appTitle,
-          style: Theme.of(context).textTheme.titleLarge
-              ?.copyWith(fontWeight: FontWeight.bold),
+        title: Row(
+          children: [
+            ClipRRect(
+              borderRadius: BorderRadius.circular(10),
+              child: Image.asset(
+                'assets/images/app_icon.png',
+                width: 32,
+                height: 32,
+                fit: BoxFit.cover,
+                errorBuilder: (_, _, _) => Icon(
+                  Icons.savings_rounded,
+                  color: colors.primary,
+                  size: 26,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                l10n.appTitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  fontWeight: FontWeight.w800,
+                  letterSpacing: -0.4,
+                ),
+              ),
+            ),
+          ],
         ),
         actions: [
           IconButton(
@@ -69,6 +123,7 @@ class HomeDashboardPage extends ConsumerWidget {
             tooltip: l10n.homeSavingsGoals,
             onPressed: () => context.push('/savings'),
           ),
+          const SizedBox(width: 4),
         ],
       ),
       body: RefreshIndicator(
@@ -81,9 +136,9 @@ class HomeDashboardPage extends ConsumerWidget {
           ref.invalidate(totalSavedAmountProvider);
         },
         child: ListView(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
           children: [
-            // 1. Total Balance Card
+            // 1. Minimalist Hero Balance + Safe Available Card
             accountsAsync.when(
               data: (accounts) {
                 final totalBalanceUnits = accounts.fold<int>(
@@ -95,102 +150,172 @@ class HomeDashboardPage extends ConsumerWidget {
                   currency: currency,
                 );
 
-                return BalanceCard(
-                  title: l10n.homeTotalBalance,
-                  money: totalMoney,
-                  icon: Icons.account_balance_wallet_rounded,
-                  accentColor: colors.primary,
-                  subtitle:
-                      '${accounts.length} ${l10n.homeAccounts.toLowerCase()}',
-                  onTap: () => context.push('/accounts'),
-                );
-              },
-              loading: () => const SkeletonCard(height: 100),
-              error: (e, _) => ErrorStateWidget(customMessage: e.toString()),
-            ),
-            const SizedBox(height: 12),
-
-            // 2. Safe Available Card (RN-05, RN-07)
-            safeAvailableAsync.when(
-              data: (res) {
-                final safeMoney = Money(
-                  units: res.safeAvailable,
-                  currency: currency,
-                );
-                final isDeficit = res.isDeficit;
-
-                return Card(
-                  color: isDeficit
-                      ? colors.expense.withValues(alpha: 0.08)
-                      : colors.primary.withValues(alpha: 0.08),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text(
-                              l10n.homeSafeAvailable,
-                              style: Theme.of(context).textTheme.labelSmall
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: isDeficit
-                                        ? colors.expense
-                                        : colors.primary,
-                                  ),
-                            ),
-                            Icon(
-                              isDeficit
-                                  ? Icons.warning_amber_rounded
-                                  : Icons.shield_rounded,
-                              color: isDeficit
-                                  ? colors.expense
-                                  : colors.primary,
-                              size: 20,
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          safeMoney.format(),
-                          style: Theme.of(context).textTheme.displayLarge
-                              ?.copyWith(
-                                fontSize: 28,
-                                fontWeight: FontWeight.bold,
-                                color: isDeficit
-                                    ? colors.expense
-                                    : colors.primary,
-                              ),
-                        ),
-                        if (isDeficit) ...[
-                          const SizedBox(height: 4),
+                return Container(
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: colors.surface,
+                    borderRadius: BorderRadius.circular(24),
+                    border: Border.all(
+                      color: colors.outline.withValues(alpha: 0.25),
+                      width: 1,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withValues(alpha: 0.03),
+                        blurRadius: 16,
+                        offset: const Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
                           Text(
-                            l10n.homeDeficitWarning,
-                            style: TextStyle(
-                              color: colors.expense,
-                              fontWeight: FontWeight.w600,
-                              fontSize: 13,
+                            l10n.homeTotalBalance,
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: colors.onSurfaceMuted,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.2,
+                                ),
+                          ),
+                          InkWell(
+                            onTap: () => context.push('/accounts'),
+                            borderRadius: BorderRadius.circular(20),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: colors.surfaceVariant,
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.account_balance_wallet_outlined,
+                                    size: 13,
+                                    color: colors.onSurfaceMuted,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    '${accounts.length} ${l10n.homeAccounts.toLowerCase()}',
+                                    style: TextStyle(
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w600,
+                                      color: colors.onSurfaceMuted,
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
                         ],
-                      ],
-                    ),
+                      ),
+                      const SizedBox(height: 6),
+                      FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.centerLeft,
+                        child: AnimatedMoneyText(
+                          money: totalMoney,
+                          style: Theme.of(context).textTheme.displayLarge
+                              ?.copyWith(
+                                fontSize: 32,
+                                fontWeight: FontWeight.w800,
+                                color: colors.onSurface,
+                                letterSpacing: -0.8,
+                              ),
+                        ),
+                      ),
+                      safeAvailableAsync.when(
+                        data: (res) {
+                          final safeMoney = Money(
+                            units: res.safeAvailable,
+                            currency: currency,
+                          );
+                          final isDeficit = res.isDeficit;
+                          final badgeColor = isDeficit
+                              ? colors.expense
+                              : colors.primary;
+
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 14),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 12,
+                                vertical: 10,
+                              ),
+                              decoration: BoxDecoration(
+                                color: badgeColor.withValues(alpha: 0.08),
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    isDeficit
+                                        ? Icons.warning_amber_rounded
+                                        : Icons.shield_outlined,
+                                    color: badgeColor,
+                                    size: 18,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Expanded(
+                                    child: Text(
+                                      isDeficit
+                                          ? l10n.homeDeficitWarning
+                                          : l10n.homeSafeAvailable,
+                                      style: TextStyle(
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                        color: badgeColor,
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    safeMoney.format(),
+                                    style: TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w800,
+                                      color: badgeColor,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
+                        loading: () => const SizedBox.shrink(),
+                        error: (_, _) => const SizedBox.shrink(),
+                      ),
+                    ],
                   ),
                 );
               },
-              loading: () => const SkeletonCard(height: 110),
-              error: (_, _) => const SizedBox.shrink(),
+              loading: () => const SkeletonCard(height: 130),
+              error: (e, _) => ErrorStateWidget(customMessage: e.toString()),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 14),
+
+            // 2. Reference 2x2 Minimalist Quick Actions Widget
+            QuickActionsWidget(
+              onQuickEntry: () => context.push('/quick-add?kind=expense'),
+              onNewTransfer: () =>
+                  context.push('/add-transaction?kind=transfer'),
+              onNewIncome: () => context.push('/quick-add?kind=income'),
+              onNewExpense: () => context.push('/quick-add?kind=expense'),
+            ),
+            const SizedBox(height: 14),
 
             // 3. Extra Income Split Card if monthly income > base income (RN-06 to RN-12)
             _ExtraIncomeSplitSection(
               currentYear: currentYear,
               currentMonth: currentMonth,
             ),
-            const SizedBox(height: 12),
 
             // 4. Metric summary cards row (Total Debts, Receivables, Savings)
             Row(
@@ -262,8 +387,10 @@ class HomeDashboardPage extends ConsumerWidget {
               children: [
                 Text(
                   l10n.homeRecentTransactions,
-                  style: Theme.of(context).textTheme.titleLarge
-                      ?.copyWith(fontSize: 18, fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    fontSize: 17,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 TextButton(
                   onPressed: () => context.go('/transactions'),
@@ -271,20 +398,25 @@ class HomeDashboardPage extends ConsumerWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
 
             recentTxAsync.when(
               data: (transactions) {
                 final displayTxs = transactions.take(5).toList();
                 if (displayTxs.isEmpty) {
-                  return Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(24.0),
-                      child: Center(
-                        child: Text(
-                          l10n.transactionEmpty,
-                          style: TextStyle(color: colors.onSurfaceMuted),
-                        ),
+                  return Container(
+                    padding: const EdgeInsets.all(24.0),
+                    decoration: BoxDecoration(
+                      color: colors.surface,
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(
+                        color: colors.outline.withValues(alpha: 0.25),
+                      ),
+                    ),
+                    child: Center(
+                      child: Text(
+                        l10n.transactionEmpty,
+                        style: TextStyle(color: colors.onSurfaceMuted),
                       ),
                     ),
                   );
@@ -329,7 +461,9 @@ class HomeDashboardPage extends ConsumerWidget {
                         iconName: cat?.icon,
                         categoryColor: cat != null ? Color(cat.color) : null,
                         accountName: acc?.account.name,
+                        accountType: acc?.account.type,
                         toAccountName: toAcc?.account.name,
+                        toAccountType: toAcc?.account.type,
                       ),
                     );
                   }).toList(),
@@ -407,62 +541,65 @@ class _ExtraIncomeSplitSection extends ConsumerWidget {
                   currency: currency,
                 );
 
-                return Card(
-                  color: colors.income.withValues(alpha: 0.08),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.call_split_rounded,
-                              color: colors.income,
-                              size: 20,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              l10n.homeExtraIncomeSplit,
-                              style: Theme.of(context).textTheme.bodyLarge
-                                  ?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: colors.income,
-                                  ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          'Superaste tu ingreso base por ${extraMoney.format()}. Sugerencia de reparto (RN-10):',
-                          style: TextStyle(
-                            color: colors.onSurfaceMuted,
-                            fontSize: 13,
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 14),
+                  child: Card(
+                    color: colors.income.withValues(alpha: 0.08),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.call_split_rounded,
+                                color: colors.income,
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                l10n.homeExtraIncomeSplit,
+                                style: Theme.of(context).textTheme.bodyLarge
+                                    ?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: colors.income,
+                                    ),
+                              ),
+                            ],
                           ),
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          children: [
-                            _splitBadge(
-                              l10n.homeSplitDebts(50),
-                              debtsMoney,
-                              colors.debt,
+                          const SizedBox(height: 6),
+                          Text(
+                            'Superaste tu ingreso base por ${extraMoney.format()}. Sugerencia de reparto (RN-10):',
+                            style: TextStyle(
+                              color: colors.onSurfaceMuted,
+                              fontSize: 13,
                             ),
-                            const SizedBox(width: 6),
-                            _splitBadge(
-                              l10n.homeSplitSavings(20),
-                              savingsMoney,
-                              colors.savings,
-                            ),
-                            const SizedBox(width: 6),
-                            _splitBadge(
-                              l10n.homeSplitFree(30),
-                              freeMoney,
-                              colors.income,
-                            ),
-                          ],
-                        ),
-                      ],
+                          ),
+                          const SizedBox(height: 10),
+                          Row(
+                            children: [
+                              _splitBadge(
+                                l10n.homeSplitDebts(50),
+                                debtsMoney,
+                                colors.debt,
+                              ),
+                              const SizedBox(width: 6),
+                              _splitBadge(
+                                l10n.homeSplitSavings(20),
+                                savingsMoney,
+                                colors.savings,
+                              ),
+                              const SizedBox(width: 6),
+                              _splitBadge(
+                                l10n.homeSplitFree(30),
+                                freeMoney,
+                                colors.income,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 );
