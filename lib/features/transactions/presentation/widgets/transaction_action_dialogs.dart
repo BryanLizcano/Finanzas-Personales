@@ -48,9 +48,8 @@ Future<bool> showTransactionDeleteConfirmDialog(BuildContext context) async {
           Expanded(
             child: Text(
               l10n.deleteTransactionConfirmTitle,
-              style: Theme.of(ctx).textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(ctx).textTheme.titleMedium
+                  ?.copyWith(fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -140,7 +139,9 @@ Future<void> executeDeleteTransaction({
         SnackBar(
           content: Text(l10n.transactionDeleted),
           behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
           action: SnackBarAction(
             label: l10n.undo,
             onPressed: () async {
@@ -179,17 +180,21 @@ void showTransactionDetailSheet({
   final amountColor = isIncome
       ? colors.income
       : isExpense
-          ? colors.expense
-          : colors.primary;
+      ? colors.expense
+      : colors.primary;
 
-  final sign = isIncome ? '+' : isExpense ? '-' : '';
+  final sign = isIncome
+      ? '+'
+      : isExpense
+      ? '-'
+      : '';
   final money = Money(units: transaction.amount, currency: currency);
 
   final String flowLabel = isIncome
       ? 'Entrada'
       : isExpense
-          ? 'Salida (Gasto)'
-          : 'Transferencia';
+      ? 'Salida (Gasto)'
+      : 'Transferencia';
 
   String currentNote = transaction.note;
 
@@ -256,9 +261,8 @@ void showTransactionDetailSheet({
                         textAlign: TextAlign.end,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: Theme.of(ctx).textTheme.labelSmall?.copyWith(
-                          color: colors.onSurfaceMuted,
-                        ),
+                        style: Theme.of(ctx).textTheme.labelSmall
+                            ?.copyWith(color: colors.onSurfaceMuted),
                       ),
                     ),
                   ],
@@ -303,15 +307,13 @@ void showTransactionDetailSheet({
                     ),
                     title: Text(
                       l10n.transactionCategory,
-                      style: Theme.of(ctx).textTheme.labelSmall?.copyWith(
-                        color: colors.onSurfaceMuted,
-                      ),
+                      style: Theme.of(ctx).textTheme.labelSmall
+                          ?.copyWith(color: colors.onSurfaceMuted),
                     ),
                     subtitle: Text(
                       categoryTitle ?? l10n.transactionCategory,
-                      style: Theme.of(ctx).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: Theme.of(ctx).textTheme.bodyLarge
+                          ?.copyWith(fontWeight: FontWeight.w600),
                     ),
                   ),
                 ],
@@ -336,15 +338,13 @@ void showTransactionDetailSheet({
                     isTransfer
                         ? l10n.transactionSourceAccount
                         : l10n.selectAccount,
-                    style: Theme.of(ctx).textTheme.labelSmall?.copyWith(
-                      color: colors.onSurfaceMuted,
-                    ),
+                    style: Theme.of(ctx).textTheme.labelSmall
+                        ?.copyWith(color: colors.onSurfaceMuted),
                   ),
                   subtitle: Text(
                     accountName ?? 'Cuenta',
-                    style: Theme.of(ctx).textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w600,
-                    ),
+                    style: Theme.of(ctx).textTheme.bodyLarge
+                        ?.copyWith(fontWeight: FontWeight.w600),
                   ),
                 ),
 
@@ -366,15 +366,13 @@ void showTransactionDetailSheet({
                     ),
                     title: Text(
                       l10n.transactionTargetAccount,
-                      style: Theme.of(ctx).textTheme.labelSmall?.copyWith(
-                        color: colors.onSurfaceMuted,
-                      ),
+                      style: Theme.of(ctx).textTheme.labelSmall
+                          ?.copyWith(color: colors.onSurfaceMuted),
                     ),
                     subtitle: Text(
                       toAccountName,
-                      style: Theme.of(ctx).textTheme.bodyLarge?.copyWith(
-                        fontWeight: FontWeight.w600,
-                      ),
+                      style: Theme.of(ctx).textTheme.bodyLarge
+                          ?.copyWith(fontWeight: FontWeight.w600),
                     ),
                   ),
                 ],
@@ -404,24 +402,24 @@ void showTransactionDetailSheet({
                           children: [
                             Text(
                               l10n.transactionAnnotation,
-                              style: Theme.of(ctx).textTheme.labelSmall?.copyWith(
-                                color: colors.onSurfaceMuted,
-                              ),
+                              style: Theme.of(ctx).textTheme.labelSmall
+                                  ?.copyWith(color: colors.onSurfaceMuted),
                             ),
                             const SizedBox(height: 2),
                             Text(
                               currentNote.isNotEmpty
                                   ? currentNote
                                   : 'Sin anotación (ej. Coca Cola)',
-                              style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
-                                fontStyle: currentNote.isEmpty
-                                    ? FontStyle.italic
-                                    : FontStyle.normal,
-                                color: currentNote.isEmpty
-                                    ? colors.onSurfaceMuted
-                                    : colors.onSurface,
-                                fontWeight: FontWeight.w600,
-                              ),
+                              style: Theme.of(ctx).textTheme.bodyMedium
+                                  ?.copyWith(
+                                    fontStyle: currentNote.isEmpty
+                                        ? FontStyle.italic
+                                        : FontStyle.normal,
+                                    color: currentNote.isEmpty
+                                        ? colors.onSurfaceMuted
+                                        : colors.onSurface,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                             ),
                           ],
                         ),
@@ -439,8 +437,9 @@ void showTransactionDetailSheet({
                           );
 
                           if (newNote != null && ctx.mounted) {
-                            final updateTx =
-                                ref.read(updateTransactionUseCaseProvider);
+                            final updateTx = ref.read(
+                              updateTransactionUseCaseProvider,
+                            );
                             final res = await updateTx(
                               id: transaction.id,
                               note: newNote,
@@ -492,8 +491,9 @@ void showTransactionDetailSheet({
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
                   onPressed: () async {
-                    final confirmed =
-                        await showTransactionDeleteConfirmDialog(ctx);
+                    final confirmed = await showTransactionDeleteConfirmDialog(
+                      ctx,
+                    );
                     if (confirmed && modalCtx.mounted) {
                       Navigator.of(modalCtx).pop();
                       await executeDeleteTransaction(
@@ -517,10 +517,7 @@ class _EditAnnotationDialog extends StatefulWidget {
   final String initialNote;
   final AppLocalizations l10n;
 
-  const _EditAnnotationDialog({
-    required this.initialNote,
-    required this.l10n,
-  });
+  const _EditAnnotationDialog({required this.initialNote, required this.l10n});
 
   @override
   State<_EditAnnotationDialog> createState() => _EditAnnotationDialogState();
@@ -550,9 +547,7 @@ class _EditAnnotationDialogState extends State<_EditAnnotationDialog> {
         controller: _controller,
         maxLength: 25,
         maxLengthEnforcement: MaxLengthEnforcement.enforced,
-        inputFormatters: [
-          LengthLimitingTextInputFormatter(25),
-        ],
+        inputFormatters: [LengthLimitingTextInputFormatter(25)],
         decoration: InputDecoration(
           hintText: l10n.transactionAnnotationHint,
           labelText: l10n.transactionAnnotation,

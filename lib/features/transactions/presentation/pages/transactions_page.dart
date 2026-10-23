@@ -44,9 +44,7 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage> {
     final currency = ref.watch(currencySettingProvider);
     final locale = Localizations.localeOf(context).languageCode;
 
-    final filter = TransactionFilter(
-      kind: _selectedKind,
-    );
+    final filter = TransactionFilter(kind: _selectedKind);
 
     final txAsync = ref.watch(transactionsStreamProvider(filter));
     final accountsAsync = ref.watch(accountsWithBalanceProvider);

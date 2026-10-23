@@ -538,9 +538,7 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
                       controller: _noteController,
                       maxLength: 25,
                       maxLengthEnforcement: MaxLengthEnforcement.enforced,
-                      inputFormatters: [
-                        LengthLimitingTextInputFormatter(25),
-                      ],
+                      inputFormatters: [LengthLimitingTextInputFormatter(25)],
                       decoration: InputDecoration(
                         hintText: l10n.transactionAnnotationHint,
                         prefixIcon: const Icon(

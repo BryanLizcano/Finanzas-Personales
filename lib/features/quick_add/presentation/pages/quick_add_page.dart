@@ -234,9 +234,7 @@ class _QuickAddPageState extends ConsumerState<QuickAddPage> {
 
     final selectedCategory = _resolveSelectedCategory(filteredCats);
     final selectedAccount =
-        accounts
-            .where((a) => a.account.id == _selectedAccountId)
-            .firstOrNull ??
+        accounts.where((a) => a.account.id == _selectedAccountId).firstOrNull ??
         accounts.firstOrNull;
 
     final accentColor = isIncome ? _mintColor : _coralColor;
@@ -360,8 +358,9 @@ class _QuickAddPageState extends ConsumerState<QuickAddPage> {
                               final isCash =
                                   acc.type == AccountType.cash ||
                                   acc.name.toLowerCase().contains('efectivo');
-                              final badgePrefix =
-                                  isCash ? 'Efectivo' : 'Cuenta';
+                              final badgePrefix = isCash
+                                  ? 'Efectivo'
+                                  : 'Cuenta';
                               final displayLabel =
                                   acc.name.toLowerCase() ==
                                       badgePrefix.toLowerCase()
@@ -479,9 +478,7 @@ class _QuickAddPageState extends ConsumerState<QuickAddPage> {
                         controller: _noteController,
                         maxLength: 25,
                         maxLengthEnforcement: MaxLengthEnforcement.enforced,
-                        inputFormatters: [
-                          LengthLimitingTextInputFormatter(25),
-                        ],
+                        inputFormatters: [LengthLimitingTextInputFormatter(25)],
                         decoration: InputDecoration(
                           hintText: l10n.transactionAnnotationHint,
                           prefixIcon: const Icon(

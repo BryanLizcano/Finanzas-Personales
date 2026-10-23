@@ -57,17 +57,25 @@ class HomeDashboardPage extends ConsumerWidget {
 
     // Keep Android SummaryWidget in sync whenever safe available or monthly balance updates
     void syncSummaryWidget() {
-      final safeUnits = ref.read(safeAvailableProvider).asData?.value.safeAvailable;
+      final safeUnits = ref
+          .read(safeAvailableProvider)
+          .asData
+          ?.value
+          .safeAvailable;
       final monthlyBalUnits = ref
-          .read(monthlySummaryProvider((year: currentYear, month: currentMonth)))
+          .read(
+            monthlySummaryProvider((year: currentYear, month: currentMonth)),
+          )
           .asData
           ?.value
           .balance;
       if (safeUnits != null && monthlyBalUnits != null) {
-        ref.read(updateWidgetDataUseCaseProvider)(
-          safeAvailable: safeUnits,
-          monthlyBalance: monthlyBalUnits,
-        ).ignore();
+        ref
+            .read(updateWidgetDataUseCaseProvider)(
+              safeAvailable: safeUnits,
+              monthlyBalance: monthlyBalUnits,
+            )
+            .ignore();
       }
     }
 
@@ -388,10 +396,8 @@ class HomeDashboardPage extends ConsumerWidget {
               children: [
                 Text(
                   l10n.homeRecentTransactions,
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                  ),
+                  style: Theme.of(context).textTheme.titleLarge
+                      ?.copyWith(fontSize: 17, fontWeight: FontWeight.w800),
                 ),
                 TextButton(
                   onPressed: () => context.go('/transactions'),

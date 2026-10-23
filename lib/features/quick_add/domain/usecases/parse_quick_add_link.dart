@@ -17,8 +17,7 @@ class ParseQuickAddLink {
     final isCustomScheme =
         uri.scheme == 'finanzas' &&
         (uri.host == 'quick-add' || uri.path == '/quick-add');
-    final isInternalRoute =
-        uri.scheme.isEmpty && uri.path == '/quick-add';
+    final isInternalRoute = uri.scheme.isEmpty && uri.path == '/quick-add';
 
     if (!isCustomScheme && !isInternalRoute) {
       return const Result.error(

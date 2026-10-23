@@ -293,164 +293,169 @@ void main() {
       expect(find.text('Transporte'), findsOneWidget);
     });
 
-    testWidgets('QuickActionsWidget renders 4 minimalist cards and handles taps', (
-      tester,
-    ) async {
-      String? lastAction;
-      await tester.pumpWidget(
-        _buildTestApp(
-          QuickActionsWidget(
-            onQuickEntry: () => lastAction = 'quick',
-            onNewTransfer: () => lastAction = 'transfer',
-            onNewIncome: () => lastAction = 'income',
-            onNewExpense: () => lastAction = 'expense',
+    testWidgets(
+      'QuickActionsWidget renders 4 minimalist cards and handles taps',
+      (tester) async {
+        String? lastAction;
+        await tester.pumpWidget(
+          _buildTestApp(
+            QuickActionsWidget(
+              onQuickEntry: () => lastAction = 'quick',
+              onNewTransfer: () => lastAction = 'transfer',
+              onNewIncome: () => lastAction = 'income',
+              onNewExpense: () => lastAction = 'expense',
+            ),
           ),
-        ),
-      );
+        );
 
-      expect(find.text('Entrada rápida'), findsOneWidget);
-      expect(find.text('Nueva transferencia'), findsOneWidget);
-      expect(find.text('Ingresos nuevos'), findsOneWidget);
-      expect(find.text('Nuevo gasto'), findsOneWidget);
+        expect(find.text('Entrada rápida'), findsOneWidget);
+        expect(find.text('Nueva transferencia'), findsOneWidget);
+        expect(find.text('Ingresos nuevos'), findsOneWidget);
+        expect(find.text('Nuevo gasto'), findsOneWidget);
 
-      await tester.tap(find.text('Entrada rápida'));
-      expect(lastAction, 'quick');
+        await tester.tap(find.text('Entrada rápida'));
+        expect(lastAction, 'quick');
 
-      await tester.tap(find.text('Nueva transferencia'));
-      expect(lastAction, 'transfer');
+        await tester.tap(find.text('Nueva transferencia'));
+        expect(lastAction, 'transfer');
 
-      await tester.tap(find.text('Ingresos nuevos'));
-      expect(lastAction, 'income');
+        await tester.tap(find.text('Ingresos nuevos'));
+        expect(lastAction, 'income');
 
-      await tester.tap(find.text('Nuevo gasto'));
-      expect(lastAction, 'expense');
-    });
+        await tester.tap(find.text('Nuevo gasto'));
+        expect(lastAction, 'expense');
+      },
+    );
 
-    testWidgets('TransactionTile highlights Entrada/Salida and Efectivo/Cuenta', (
-      tester,
-    ) async {
-      final now = DateTime(2026, 10, 22);
-      final expenseTx = TransactionEntity(
-        id: 1,
-        kind: TransactionKind.expense,
-        amount: 25000,
-        accountId: 1,
-        categoryId: 1,
-        occurredAt: now,
-        createdAt: now,
-        updatedAt: now,
-      );
-      final incomeTx = TransactionEntity(
-        id: 2,
-        kind: TransactionKind.income,
-        amount: 180000,
-        accountId: 2,
-        categoryId: 2,
-        occurredAt: now,
-        createdAt: now,
-        updatedAt: now,
-      );
+    testWidgets(
+      'TransactionTile highlights Entrada/Salida and Efectivo/Cuenta',
+      (tester) async {
+        final now = DateTime(2026, 10, 22);
+        final expenseTx = TransactionEntity(
+          id: 1,
+          kind: TransactionKind.expense,
+          amount: 25000,
+          accountId: 1,
+          categoryId: 1,
+          occurredAt: now,
+          createdAt: now,
+          updatedAt: now,
+        );
+        final incomeTx = TransactionEntity(
+          id: 2,
+          kind: TransactionKind.income,
+          amount: 180000,
+          accountId: 2,
+          categoryId: 2,
+          occurredAt: now,
+          createdAt: now,
+          updatedAt: now,
+        );
 
-      await tester.pumpWidget(
-        _buildTestApp(
-          Column(
-            children: [
-              TransactionTile(
-                transaction: expenseTx,
-                currency: Currency.cop,
-                categoryTitle: 'Restaurantes',
-                accountName: 'Billetera',
-                accountType: AccountType.cash,
-              ),
-              TransactionTile(
-                transaction: incomeTx,
-                currency: Currency.cop,
-                categoryTitle: 'Sueldo',
-                accountName: 'Bancolombia',
-                accountType: AccountType.bank,
-              ),
-            ],
+        await tester.pumpWidget(
+          _buildTestApp(
+            Column(
+              children: [
+                TransactionTile(
+                  transaction: expenseTx,
+                  currency: Currency.cop,
+                  categoryTitle: 'Restaurantes',
+                  accountName: 'Billetera',
+                  accountType: AccountType.cash,
+                ),
+                TransactionTile(
+                  transaction: incomeTx,
+                  currency: Currency.cop,
+                  categoryTitle: 'Sueldo',
+                  accountName: 'Bancolombia',
+                  accountType: AccountType.bank,
+                ),
+              ],
+            ),
           ),
-        ),
-      );
+        );
 
-      expect(find.text('Salida'), findsOneWidget);
-      expect(find.text('Entrada'), findsOneWidget);
-      expect(find.textContaining('Efectivo'), findsOneWidget);
-      expect(find.textContaining('Cuenta • Bancolombia'), findsOneWidget);
-    });
+        expect(find.text('Salida'), findsOneWidget);
+        expect(find.text('Entrada'), findsOneWidget);
+        expect(find.textContaining('Efectivo'), findsOneWidget);
+        expect(find.textContaining('Cuenta • Bancolombia'), findsOneWidget);
+      },
+    );
 
-    testWidgets('TransactionTile displays annotation (note) with sticky note icon', (
-      tester,
-    ) async {
-      final now = DateTime(2026, 10, 22);
-      final tx = TransactionEntity(
-        id: 10,
-        kind: TransactionKind.expense,
-        amount: 4500,
-        accountId: 1,
-        occurredAt: now,
-        createdAt: now,
-        updatedAt: now,
-        note: 'Cocaola',
-      );
+    testWidgets(
+      'TransactionTile displays annotation (note) with sticky note icon',
+      (tester) async {
+        final now = DateTime(2026, 10, 22);
+        final tx = TransactionEntity(
+          id: 10,
+          kind: TransactionKind.expense,
+          amount: 4500,
+          accountId: 1,
+          occurredAt: now,
+          createdAt: now,
+          updatedAt: now,
+          note: 'Cocaola',
+        );
 
-      await tester.pumpWidget(
-        _buildTestApp(
-          TransactionTile(
-            transaction: tx,
-            currency: Currency.cop,
-            categoryTitle: 'Bebidas',
-            accountName: 'Efectivo',
-            accountType: AccountType.cash,
+        await tester.pumpWidget(
+          _buildTestApp(
+            TransactionTile(
+              transaction: tx,
+              currency: Currency.cop,
+              categoryTitle: 'Bebidas',
+              accountName: 'Efectivo',
+              accountType: AccountType.cash,
+            ),
           ),
-        ),
-      );
+        );
 
-      expect(find.text('Cocaola'), findsOneWidget);
-      expect(find.byIcon(Icons.sticky_note_2_outlined), findsOneWidget);
-    });
+        expect(find.text('Cocaola'), findsOneWidget);
+        expect(find.byIcon(Icons.sticky_note_2_outlined), findsOneWidget);
+      },
+    );
 
-    testWidgets('showTransactionDeleteConfirmDialog renders "¿Estás seguro de eliminar?" and buttons "No" and "Sí"', (
-      tester,
-    ) async {
-      bool? dialogResult;
+    testWidgets(
+      'showTransactionDeleteConfirmDialog renders "¿Estás seguro de eliminar?" and buttons "No" and "Sí"',
+      (tester) async {
+        bool? dialogResult;
 
-      await tester.pumpWidget(
-        _buildTestApp(
-          Builder(
-            builder: (context) {
-              return ElevatedButton(
-                onPressed: () async {
-                  dialogResult =
-                      await showTransactionDeleteConfirmDialog(context);
-                },
-                child: const Text('Open Dialog'),
-              );
-            },
+        await tester.pumpWidget(
+          _buildTestApp(
+            Builder(
+              builder: (context) {
+                return ElevatedButton(
+                  onPressed: () async {
+                    dialogResult = await showTransactionDeleteConfirmDialog(
+                      context,
+                    );
+                  },
+                  child: const Text('Open Dialog'),
+                );
+              },
+            ),
           ),
-        ),
-      );
+        );
 
-      // Open dialog
-      await tester.tap(find.text('Open Dialog'));
-      await tester.pumpAndSettle();
+        // Open dialog
+        await tester.tap(find.text('Open Dialog'));
+        await tester.pumpAndSettle();
 
-      expect(find.text('¿Estás seguro de eliminar?'), findsOneWidget);
-      expect(find.text('No'), findsOneWidget);
-      expect(find.text('Sí'), findsOneWidget);
+        expect(find.text('¿Estás seguro de eliminar?'), findsOneWidget);
+        expect(find.text('No'), findsOneWidget);
+        expect(find.text('Sí'), findsOneWidget);
 
-      // Tap 'No'
-      await tester.tap(find.text('No'));
-      await tester.pumpAndSettle();
-      expect(dialogResult, isFalse);
+        // Tap 'No'
+        await tester.tap(find.text('No'));
+        await tester.pumpAndSettle();
+        expect(dialogResult, isFalse);
 
-      // Open dialog again and tap 'Sí'
-      await tester.tap(find.text('Open Dialog'));
-      await tester.pumpAndSettle();
-      await tester.tap(find.text('Sí'));
-      await tester.pumpAndSettle();
-      expect(dialogResult, isTrue);
-    });
+        // Open dialog again and tap 'Sí'
+        await tester.tap(find.text('Open Dialog'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Sí'));
+        await tester.pumpAndSettle();
+        expect(dialogResult, isTrue);
+      },
+    );
   });
 }

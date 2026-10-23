@@ -106,10 +106,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/onboarding',
         parentNavigatorKey: _rootNavigatorKey,
-        pageBuilder: (context, state) => _buildSmoothPage(
-          key: state.pageKey,
-          child: const OnboardingPage(),
-        ),
+        pageBuilder: (context, state) =>
+            _buildSmoothPage(key: state.pageKey, child: const OnboardingPage()),
       ),
       GoRoute(
         path: '/quick-add',
@@ -161,50 +159,38 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/reports',
         parentNavigatorKey: _rootNavigatorKey,
-        pageBuilder: (context, state) => _buildSmoothPage(
-          key: state.pageKey,
-          child: const ReportsPage(),
-        ),
+        pageBuilder: (context, state) =>
+            _buildSmoothPage(key: state.pageKey, child: const ReportsPage()),
       ),
       GoRoute(
         path: '/savings',
         parentNavigatorKey: _rootNavigatorKey,
-        pageBuilder: (context, state) => _buildSmoothPage(
-          key: state.pageKey,
-          child: const SavingsPage(),
-        ),
+        pageBuilder: (context, state) =>
+            _buildSmoothPage(key: state.pageKey, child: const SavingsPage()),
       ),
       GoRoute(
         path: '/accounts',
         parentNavigatorKey: _rootNavigatorKey,
-        pageBuilder: (context, state) => _buildSmoothPage(
-          key: state.pageKey,
-          child: const AccountsPage(),
-        ),
+        pageBuilder: (context, state) =>
+            _buildSmoothPage(key: state.pageKey, child: const AccountsPage()),
       ),
       GoRoute(
         path: '/categories',
         parentNavigatorKey: _rootNavigatorKey,
-        pageBuilder: (context, state) => _buildSmoothPage(
-          key: state.pageKey,
-          child: const CategoriesPage(),
-        ),
+        pageBuilder: (context, state) =>
+            _buildSmoothPage(key: state.pageKey, child: const CategoriesPage()),
       ),
       GoRoute(
         path: '/backup',
         parentNavigatorKey: _rootNavigatorKey,
-        pageBuilder: (context, state) => _buildSmoothPage(
-          key: state.pageKey,
-          child: const BackupPage(),
-        ),
+        pageBuilder: (context, state) =>
+            _buildSmoothPage(key: state.pageKey, child: const BackupPage()),
       ),
       GoRoute(
         path: '/updates',
         parentNavigatorKey: _rootNavigatorKey,
-        pageBuilder: (context, state) => _buildSmoothPage(
-          key: state.pageKey,
-          child: const UpdatesPage(),
-        ),
+        pageBuilder: (context, state) =>
+            _buildSmoothPage(key: state.pageKey, child: const UpdatesPage()),
       ),
 
       // 4 Main Bottom Navigation Tabs

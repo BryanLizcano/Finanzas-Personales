@@ -152,9 +152,8 @@ class TransactionTile extends StatelessWidget {
                 children: [
                   Text(
                     isTransfer ? l10n.transactionTransfer : categoryTitle,
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: Theme.of(context).textTheme.bodyLarge
+                        ?.copyWith(fontWeight: FontWeight.w700),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
@@ -192,11 +191,12 @@ class TransactionTile extends StatelessWidget {
                         Flexible(
                           child: Text(
                             transaction.note,
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: colors.onSurfaceMuted,
-                              fontSize: 11.5,
-                              fontWeight: FontWeight.w500,
-                            ),
+                            style: Theme.of(context).textTheme.labelSmall
+                                ?.copyWith(
+                                  color: colors.onSurfaceMuted,
+                                  fontSize: 11.5,
+                                  fontWeight: FontWeight.w500,
+                                ),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -224,10 +224,8 @@ class TransactionTile extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   dateFormat.format(transaction.occurredAt),
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: colors.onSurfaceMuted,
-                    fontSize: 11,
-                  ),
+                  style: Theme.of(context).textTheme.labelSmall
+                      ?.copyWith(color: colors.onSurfaceMuted, fontSize: 11),
                 ),
               ],
             ),
@@ -291,10 +289,7 @@ class _HighlightBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(
-          color: color.withValues(alpha: 0.28),
-          width: 0.8,
-        ),
+        border: Border.all(color: color.withValues(alpha: 0.28), width: 0.8),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
