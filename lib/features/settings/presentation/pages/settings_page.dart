@@ -215,7 +215,7 @@ class SettingsPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${l10n.settingsVersion}: 1.2.0 (Offline-First)',
+                    '${l10n.settingsVersion}: 1.2.1 (Offline-First)',
                     style: TextStyle(
                       color: colors.onSurfaceMuted,
                       fontSize: 13,

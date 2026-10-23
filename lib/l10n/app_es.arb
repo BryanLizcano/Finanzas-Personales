@@ -250,6 +250,8 @@
   },
   "updatesVerifying": "Verificando integridad SHA-256...",
   "updatesInstallReady": "Archivo verificado listo para instalar",
+  "updatesInstallNow": "Instalar actualización",
+  "updatesReDownload": "Descargar de nuevo",
 
   "onboardingTitle": "Bienvenido a Finanzas Personales",
   "onboardingSubtitle": "Control total de tu dinero, libre de deudas, con privacidad absoluta.",

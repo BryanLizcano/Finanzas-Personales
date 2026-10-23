@@ -1,4 +1,8 @@
+import 'dart:io';
+
+import 'package:crypto/crypto.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -9,6 +13,7 @@ import '../../../../core/widgets/app_progress_bar.dart';
 import '../../../../core/widgets/error_state_widget.dart';
 import '../../../../core/widgets/skeleton_loading.dart';
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../domain/entities/update_info.dart';
 import '../providers/updates_providers.dart';
 
 class UpdatesPage extends ConsumerStatefulWidget {
@@ -19,8 +24,14 @@ class UpdatesPage extends ConsumerStatefulWidget {
 }
 
 class _UpdatesPageState extends ConsumerState<UpdatesPage> {
+  static const _installerChannel = MethodChannel('com.finanzas.app/installer');
+
   bool _isChecking = false;
   bool _isDownloading = false;
+  bool _isInstalling = false;
+  bool _isDownloaded = false;
+  String? _downloadedApkPath;
+  String? _checkedVersion;
   double _downloadProgress = 0.0;
   String? _statusMessage;
 
@@ -28,6 +39,7 @@ class _UpdatesPageState extends ConsumerState<UpdatesPage> {
     setState(() {
       _isChecking = true;
       _statusMessage = null;
+      _checkedVersion = null;
     });
 
     ref.invalidate(latestUpdateInfoProvider);
@@ -36,9 +48,77 @@ class _UpdatesPageState extends ConsumerState<UpdatesPage> {
     if (mounted) setState(() => _isChecking = false);
   }
 
+  Future<void> _checkApkStatus(UpdateInfo info) async {
+    if (!info.hasUpdate || _checkedVersion == info.latestVersion) return;
+    _checkedVersion = info.latestVersion;
+
+    try {
+      final appDir = await getTemporaryDirectory();
+      final targetPath = '${appDir.path}/update_${info.latestVersion}.apk';
+      final file = File(targetPath);
+      if (await file.exists()) {
+        final length = await file.length();
+        if (length > 0) {
+          bool isValid = true;
+          if (info.sha256Expected != null &&
+              info.sha256Expected!.trim().isNotEmpty) {
+            final digest = await sha256.bind(file.openRead()).first;
+            isValid =
+                digest.toString().toLowerCase() ==
+                info.sha256Expected!.trim().toLowerCase();
+          }
+          if (isValid && mounted) {
+            setState(() {
+              _downloadedApkPath = targetPath;
+              _isDownloaded = true;
+            });
+            return;
+          }
+        }
+      }
+    } catch (_) {}
+
+    if (mounted && _isDownloaded) {
+      setState(() {
+        _isDownloaded = false;
+        _downloadedApkPath = null;
+      });
+    }
+  }
+
+  Future<void> _handleInstall(String targetPath) async {
+    setState(() => _isInstalling = true);
+    try {
+      final res = await _installerChannel.invokeMethod<bool>('installApk', {
+        'filePath': targetPath,
+      });
+      if (res != true && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('No se pudo abrir el instalador del paquete.'),
+          ),
+        );
+      }
+    } on PlatformException catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al abrir instalador: ${e.message}')),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context)
+            .showSnackBar(SnackBar(content: Text('Error inesperado: $e')));
+      }
+    } finally {
+      if (mounted) setState(() => _isInstalling = false);
+    }
+  }
+
   Future<void> _handleDownload(
     String downloadUrl,
     String expectedSha256,
+    String latestVersion,
   ) async {
     final l10n = AppLocalizations.of(context);
     setState(() {
@@ -49,7 +129,7 @@ class _UpdatesPageState extends ConsumerState<UpdatesPage> {
 
     try {
       final appDir = await getTemporaryDirectory();
-      final targetPath = '${appDir.path}/update.apk';
+      final targetPath = '${appDir.path}/update_$latestVersion.apk';
 
       final downloadUseCase = ref.read(downloadAndVerifyUpdateUseCaseProvider);
       final res = await downloadUseCase(
@@ -66,13 +146,20 @@ class _UpdatesPageState extends ConsumerState<UpdatesPage> {
         },
       );
 
-      res.fold(
-        onOk: (path) {
-          setState(() => _statusMessage = l10n.updatesInstallReady);
+      await res.fold(
+        onOk: (path) async {
+          setState(() {
+            _downloadedApkPath = path;
+            _isDownloaded = true;
+            _statusMessage = l10n.updatesInstallReady;
+          });
           ScaffoldMessenger.of(context)
               .showSnackBar(SnackBar(content: Text(l10n.updatesInstallReady)));
+
+          // Disparar inmediatamente el instalador nativo de Android
+          await _handleInstall(path);
         },
-        onError: (f) {
+        onError: (f) async {
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text(f.toLocalizedMessage(l10n))));
@@ -111,7 +198,7 @@ class _UpdatesPageState extends ConsumerState<UpdatesPage> {
                   ),
                   const SizedBox(height: 12),
                   Text(
-                    'Finanzas Personales v${updateAsync.value?.currentVersion ?? '1.1.0'}',
+                    'Finanzas Personales v${updateAsync.value?.currentVersion ?? '1.2.1'}',
                     style: Theme.of(context).textTheme.titleLarge
                         ?.copyWith(fontWeight: FontWeight.bold),
                   ),
@@ -133,10 +220,14 @@ class _UpdatesPageState extends ConsumerState<UpdatesPage> {
               ),
             ),
             const SizedBox(height: 20),
-
             updateAsync.when(
               data: (info) {
                 if (info.hasUpdate) {
+                  // Comprobar si el APK ya está en caché verificado
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    _checkApkStatus(info);
+                  });
+
                   return Card(
                     color: colors.primary.withValues(alpha: 0.08),
                     child: Padding(
@@ -190,15 +281,43 @@ class _UpdatesPageState extends ConsumerState<UpdatesPage> {
                             ),
                             const SizedBox(height: 12),
                           ],
-                          AppButton(
-                            label: l10n.updatesDownloadAndInstall,
-                            isLoading: _isDownloading,
-                            icon: Icons.download_rounded,
-                            onPressed: () => _handleDownload(
-                              info.apkDownloadUrl,
-                              info.sha256Expected ?? '',
+                          if (_isDownloaded && _downloadedApkPath != null) ...[
+                            AppButton(
+                              label: l10n.updatesInstallNow,
+                              isLoading: _isInstalling,
+                              icon: Icons.system_update_rounded,
+                              onPressed: () =>
+                                  _handleInstall(_downloadedApkPath!),
                             ),
-                          ),
+                            const SizedBox(height: 6),
+                            Center(
+                              child: TextButton.icon(
+                                icon: const Icon(
+                                  Icons.refresh_rounded,
+                                  size: 16,
+                                ),
+                                label: Text(l10n.updatesReDownload),
+                                onPressed: _isDownloading || _isInstalling
+                                    ? null
+                                    : () => _handleDownload(
+                                        info.apkDownloadUrl,
+                                        info.sha256Expected ?? '',
+                                        info.latestVersion,
+                                      ),
+                              ),
+                            ),
+                          ] else ...[
+                            AppButton(
+                              label: l10n.updatesDownloadAndInstall,
+                              isLoading: _isDownloading,
+                              icon: Icons.download_rounded,
+                              onPressed: () => _handleDownload(
+                                info.apkDownloadUrl,
+                                info.sha256Expected ?? '',
+                                info.latestVersion,
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),

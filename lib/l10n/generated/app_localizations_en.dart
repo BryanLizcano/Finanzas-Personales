@@ -629,6 +629,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get updatesInstallReady => 'Verified package ready to install';
 
   @override
+  String get updatesInstallNow => 'Install update';
+
+  @override
+  String get updatesReDownload => 'Re-download';
+
+  @override
   String get onboardingTitle => 'Welcome to Personal Finance';
 
   @override

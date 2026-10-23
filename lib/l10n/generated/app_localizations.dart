@@ -1273,6 +1273,18 @@ abstract class AppLocalizations {
   /// **'Archivo verificado listo para instalar'**
   String get updatesInstallReady;
 
+  /// No description provided for @updatesInstallNow.
+  ///
+  /// In es, this message translates to:
+  /// **'Instalar actualización'**
+  String get updatesInstallNow;
+
+  /// No description provided for @updatesReDownload.
+  ///
+  /// In es, this message translates to:
+  /// **'Descargar de nuevo'**
+  String get updatesReDownload;
+
   /// No description provided for @onboardingTitle.
   ///
   /// In es, this message translates to:

@@ -632,6 +632,12 @@ class AppLocalizationsEs extends AppLocalizations {
   String get updatesInstallReady => 'Archivo verificado listo para instalar';
 
   @override
+  String get updatesInstallNow => 'Instalar actualización';
+
+  @override
+  String get updatesReDownload => 'Descargar de nuevo';
+
+  @override
   String get onboardingTitle => 'Bienvenido a Finanzas Personales';
 
   @override

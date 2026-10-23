@@ -250,6 +250,8 @@
   },
   "updatesVerifying": "Verifying SHA-256 integrity...",
   "updatesInstallReady": "Verified package ready to install",
+  "updatesInstallNow": "Install update",
+  "updatesReDownload": "Re-download",
 
   "onboardingTitle": "Welcome to Personal Finance",
   "onboardingSubtitle": "Total control of your money, debt-free, 100% private.",

@@ -16,7 +16,7 @@ class BackupRepositoryImpl implements BackupRepository {
   final AppDatabase _db;
   final String _appVersion;
 
-  BackupRepositoryImpl(this._db, [this._appVersion = '1.2.0']);
+  BackupRepositoryImpl(this._db, [this._appVersion = '1.2.1']);
 
   @override
   Future<Result<String, Failure>> createBackupJson() async {
