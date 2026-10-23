@@ -38,6 +38,7 @@ class _QuickAddPageState extends ConsumerState<QuickAddPage> {
   String _rawAmount = '';
   int? _selectedAccountId;
   int? _selectedCategoryId;
+  final _noteController = TextEditingController();
   bool _isLoading = false;
 
   static const Color _mintColor = Color(0xFF3B8266);
@@ -59,11 +60,18 @@ class _QuickAddPageState extends ConsumerState<QuickAddPage> {
     }
   }
 
+  @override
+  void dispose() {
+    _noteController.dispose();
+    super.dispose();
+  }
+
   void _applyPayload(QuickAddPayload payload) {
     _kind = payload.kind == TransactionKind.transfer
         ? TransactionKind.expense
         : payload.kind;
     _selectedCategoryId = null;
+    _noteController.clear();
     if (payload.amount != null && payload.amount! > 0) {
       _rawAmount = payload.amount.toString();
     } else {
@@ -153,7 +161,7 @@ class _QuickAddPageState extends ConsumerState<QuickAddPage> {
         accountId: accountId,
         categoryId: category?.id,
         occurredAt: DateTime.now(),
-        note: '',
+        note: _noteController.text.trim(),
       );
 
       if (res.isOk) {
@@ -257,6 +265,10 @@ class _QuickAddPageState extends ConsumerState<QuickAddPage> {
                 if (parsed != null && parsed > 0) {
                   queryParams['amount'] = parsed.toString();
                 }
+              }
+              final noteText = _noteController.text.trim();
+              if (noteText.isNotEmpty) {
+                queryParams['note'] = noteText;
               }
               final uri = Uri(
                 path: '/add-transaction',
@@ -461,6 +473,29 @@ class _QuickAddPageState extends ConsumerState<QuickAddPage> {
                       ],
 
                       const Spacer(),
+                      const SizedBox(height: 8),
+
+                      TextField(
+                        controller: _noteController,
+                        maxLength: 25,
+                        maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                        inputFormatters: [
+                          LengthLimitingTextInputFormatter(25),
+                        ],
+                        decoration: InputDecoration(
+                          hintText: l10n.transactionAnnotationHint,
+                          prefixIcon: const Icon(
+                            Icons.sticky_note_2_outlined,
+                            size: 16,
+                          ),
+                          counterText: '',
+                          isDense: true,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 10,
+                            vertical: 8,
+                          ),
+                        ),
+                      ),
                       const SizedBox(height: 8),
 
                       NumericKeypad(

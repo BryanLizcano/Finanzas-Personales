@@ -24,6 +24,7 @@ import '../../../savings/presentation/providers/savings_providers.dart';
 import '../../../settings/presentation/providers/settings_providers.dart';
 import '../../../transactions/domain/entities/transaction.dart';
 import '../../../transactions/presentation/providers/transactions_providers.dart';
+import '../../../transactions/presentation/widgets/transaction_action_dialogs.dart';
 import '../providers/reports_providers.dart';
 
 class HomeDashboardPage extends ConsumerWidget {
@@ -464,6 +465,32 @@ class HomeDashboardPage extends ConsumerWidget {
                         accountType: acc?.account.type,
                         toAccountName: toAcc?.account.name,
                         toAccountType: toAcc?.account.type,
+                        onTap: () {
+                          showTransactionDetailSheet(
+                            context: context,
+                            ref: ref,
+                            transaction: tx,
+                            currency: currency,
+                            categoryTitle: catTitle,
+                            category: cat,
+                            accountName: acc?.account.name,
+                            accountType: acc?.account.type,
+                            toAccountName: toAcc?.account.name,
+                            toAccountType: toAcc?.account.type,
+                          );
+                        },
+                        confirmDismiss: (direction) async {
+                          return await showTransactionDeleteConfirmDialog(
+                            context,
+                          );
+                        },
+                        onDismissed: () async {
+                          await executeDeleteTransaction(
+                            context: context,
+                            ref: ref,
+                            transaction: tx,
+                          );
+                        },
                       ),
                     );
                   }).toList(),

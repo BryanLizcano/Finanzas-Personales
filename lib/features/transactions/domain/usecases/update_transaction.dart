@@ -35,6 +35,12 @@ class UpdateTransaction {
       );
     }
 
+    String? sanitizedNote;
+    if (note != null) {
+      final clean = note.trim();
+      sanitizedNote = clean.length > 25 ? clean.substring(0, 25) : clean;
+    }
+
     return _repository.updateTransaction(
       id: id,
       amount: amount,
@@ -45,7 +51,7 @@ class UpdateTransaction {
       receivableId: receivableId,
       goalId: goalId,
       occurredAt: occurredAt,
-      note: note?.trim(),
+      note: sanitizedNote,
     );
   }
 }

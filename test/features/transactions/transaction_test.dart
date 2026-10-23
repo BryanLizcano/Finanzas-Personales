@@ -256,5 +256,28 @@ void main() {
       expect(incomeFiltered.length, 1);
       expect(incomeFiltered.first.note, 'Sueldo quincenal');
     });
+
+    test('Annotations (notes) are limited to at most 25 characters', () async {
+      final txRes = await addTransaction(
+        kind: TransactionKind.expense,
+        amount: 3500,
+        accountId: acc1Id,
+        occurredAt: DateTime.now(),
+        note: 'Cocaola bien fría y unas galletas largas',
+      );
+      expect(txRes.isOk, isTrue);
+      final tx = txRes.valueOrNull!;
+      // Should be truncated to 25 chars max
+      expect(tx.note.length, lessThanOrEqualTo(25));
+      expect(tx.note, 'Cocaola bien fría y unas ');
+
+      final updatedRes = await updateTransaction(
+        id: tx.id,
+        note: 'Agua mineral con gas y limon',
+      );
+      expect(updatedRes.isOk, isTrue);
+      expect(updatedRes.valueOrNull!.note.length, lessThanOrEqualTo(25));
+      expect(updatedRes.valueOrNull!.note, 'Agua mineral con gas y li');
+    });
   });
 }

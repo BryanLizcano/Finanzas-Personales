@@ -27,12 +27,14 @@ class AddTransactionPage extends ConsumerStatefulWidget {
   final TransactionKind initialKind;
   final String? initialCategoryKey;
   final int? initialAmountUnits;
+  final String? initialNote;
 
   const AddTransactionPage({
     super.key,
     this.initialKind = TransactionKind.expense,
     this.initialCategoryKey,
     this.initialAmountUnits,
+    this.initialNote,
   });
 
   @override
@@ -60,6 +62,9 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
     if (widget.initialAmountUnits != null && widget.initialAmountUnits! > 0) {
       _rawAmount = widget.initialAmountUnits.toString();
     }
+    if (widget.initialNote != null && widget.initialNote!.isNotEmpty) {
+      _noteController.text = widget.initialNote!;
+    }
   }
 
   @override
@@ -67,13 +72,17 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
     super.didUpdateWidget(oldWidget);
     if (oldWidget.initialKind != widget.initialKind ||
         oldWidget.initialCategoryKey != widget.initialCategoryKey ||
-        oldWidget.initialAmountUnits != widget.initialAmountUnits) {
+        oldWidget.initialAmountUnits != widget.initialAmountUnits ||
+        oldWidget.initialNote != widget.initialNote) {
       setState(() {
         _kind = widget.initialKind;
         _selectedCategory = null;
         if (widget.initialAmountUnits != null &&
             widget.initialAmountUnits! > 0) {
           _rawAmount = widget.initialAmountUnits.toString();
+        }
+        if (widget.initialNote != null) {
+          _noteController.text = widget.initialNote!;
         }
       });
     }
@@ -527,10 +536,20 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
                   Expanded(
                     child: TextField(
                       controller: _noteController,
+                      maxLength: 25,
+                      maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                      inputFormatters: [
+                        LengthLimitingTextInputFormatter(25),
+                      ],
                       decoration: InputDecoration(
-                        hintText: l10n.transactionNote,
+                        hintText: l10n.transactionAnnotationHint,
+                        prefixIcon: const Icon(
+                          Icons.sticky_note_2_outlined,
+                          size: 16,
+                        ),
+                        counterText: '',
                         contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 12,
+                          horizontal: 10,
                           vertical: 10,
                         ),
                       ),

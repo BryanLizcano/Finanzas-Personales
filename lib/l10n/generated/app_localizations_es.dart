@@ -179,6 +179,31 @@ class AppLocalizationsEs extends AppLocalizations {
   String get transactionNote => 'Nota u observación (opcional)';
 
   @override
+  String get transactionAnnotation => 'Anotación';
+
+  @override
+  String get transactionAnnotationHint => 'Anotación ej. Coca Cola (máx 25)';
+
+  @override
+  String get editAnnotation => 'Editar anotación';
+
+  @override
+  String get transactionDetailsTitle => 'Detalle del movimiento';
+
+  @override
+  String get deleteTransactionConfirmTitle => '¿Estás seguro de eliminar?';
+
+  @override
+  String get deleteTransactionConfirmMessage =>
+      '¿Deseas eliminar este movimiento? Tus saldos se recalcularán automáticamente.';
+
+  @override
+  String get yes => 'Sí';
+
+  @override
+  String get no => 'No';
+
+  @override
   String get transactionSaved => 'Movimiento registrado con éxito';
 
   @override

@@ -7,7 +7,7 @@ import '../../domain/usecases/check_for_update.dart';
 import '../../domain/usecases/download_and_verify_update.dart';
 
 final updateRepositoryProvider = Provider<UpdateRepository>((ref) {
-  return UpdateRepositoryImpl(currentVersion: '1.1.0');
+  return UpdateRepositoryImpl(currentVersion: '1.2.0');
 });
 
 final checkForUpdateUseCaseProvider = Provider<CheckForUpdate>((ref) {
@@ -24,8 +24,8 @@ final latestUpdateInfoProvider = FutureProvider<UpdateInfo>((ref) async {
   final res = await useCase();
   return res.valueOrNull ??
       const UpdateInfo(
-        currentVersion: '1.1.0',
-        latestVersion: '1.1.0',
+        currentVersion: '1.2.0',
+        latestVersion: '1.2.0',
         hasUpdate: false,
         releaseNotes: '',
         apkDownloadUrl: '',

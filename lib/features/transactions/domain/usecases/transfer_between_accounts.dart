@@ -31,6 +31,11 @@ class TransferBetweenAccounts {
       );
     }
 
+    final cleanNote = note.trim();
+    final sanitizedNote = cleanNote.length > 25
+        ? cleanNote.substring(0, 25)
+        : cleanNote;
+
     return _repository.addTransaction(
       kind: TransactionKind.transfer,
       amount: amount,
@@ -38,7 +43,7 @@ class TransferBetweenAccounts {
       toAccountId: targetAccountId,
       occurredAt: occurredAt,
       goalId: goalId,
-      note: note.trim(),
+      note: sanitizedNote,
     );
   }
 }

@@ -17,6 +17,7 @@ import '../../../categories/presentation/providers/categories_providers.dart';
 import '../../../settings/presentation/providers/settings_providers.dart';
 import '../../domain/entities/transaction.dart';
 import '../providers/transactions_providers.dart';
+import '../widgets/transaction_action_dialogs.dart';
 
 class TransactionsPage extends ConsumerStatefulWidget {
   const TransactionsPage({super.key});
@@ -45,7 +46,6 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage> {
 
     final filter = TransactionFilter(
       kind: _selectedKind,
-      searchQuery: _searchQuery.isEmpty ? null : _searchQuery,
     );
 
     final txAsync = ref.watch(transactionsStreamProvider(filter));
@@ -136,7 +136,58 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage> {
             // Transactions list
             Expanded(
               child: txAsync.when(
-                data: (transactions) {
+                data: (allTransactions) {
+                  final accounts =
+                      accountsAsync.asData?.value ?? <AccountWithBalance>[];
+                  final categories = allCatsAsync.asData?.value ?? <Category>[];
+
+                  final queryLower = _searchQuery.toLowerCase();
+                  final transactions = queryLower.isEmpty
+                      ? allTransactions
+                      : allTransactions.where((tx) {
+                          if (tx.note.toLowerCase().contains(queryLower)) {
+                            return true;
+                          }
+                          final cat = categories
+                              .where((Category c) => c.id == tx.categoryId)
+                              .firstOrNull;
+                          final catTitle =
+                              cat?.displayName(
+                                (String k) => l10n.translateCategoryKey(k),
+                              ) ??
+                              (tx.kind == TransactionKind.transfer
+                                  ? l10n.transactionTransfer
+                                  : l10n.transactionCategory);
+                          if (catTitle.toLowerCase().contains(queryLower)) {
+                            return true;
+                          }
+                          final acc = accounts
+                              .where(
+                                (AccountWithBalance a) =>
+                                    a.account.id == tx.accountId,
+                              )
+                              .firstOrNull;
+                          if (acc != null &&
+                              acc.account.name.toLowerCase().contains(
+                                queryLower,
+                              )) {
+                            return true;
+                          }
+                          final toAcc = accounts
+                              .where(
+                                (AccountWithBalance a) =>
+                                    a.account.id == tx.toAccountId,
+                              )
+                              .firstOrNull;
+                          if (toAcc != null &&
+                              toAcc.account.name.toLowerCase().contains(
+                                queryLower,
+                              )) {
+                            return true;
+                          }
+                          return false;
+                        }).toList();
+
                   if (transactions.isEmpty) {
                     return EmptyStateWidget(
                       title: l10n.transactionEmpty,
@@ -166,10 +217,6 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage> {
                     }
                     groups.putIfAbsent(header, () => []).add(tx);
                   }
-
-                  final accounts =
-                      accountsAsync.asData?.value ?? <AccountWithBalance>[];
-                  final categories = allCatsAsync.asData?.value ?? <Category>[];
 
                   return ListView.builder(
                     padding: const EdgeInsets.symmetric(
@@ -237,30 +284,31 @@ class _TransactionsPageState extends ConsumerState<TransactionsPage> {
                                 accountType: acc?.account.type,
                                 toAccountName: toAcc?.account.name,
                                 toAccountType: toAcc?.account.type,
-                                onDismissed: () async {
-                                  // Soft delete
-                                  final deleteTx = ref.read(
-                                    deleteTransactionUseCaseProvider,
+                                onTap: () {
+                                  showTransactionDetailSheet(
+                                    context: context,
+                                    ref: ref,
+                                    transaction: tx,
+                                    currency: currency,
+                                    categoryTitle: catTitle,
+                                    category: cat,
+                                    accountName: acc?.account.name,
+                                    accountType: acc?.account.type,
+                                    toAccountName: toAcc?.account.name,
+                                    toAccountType: toAcc?.account.type,
                                   );
-                                  await deleteTx(tx.id);
-
-                                  if (context.mounted) {
-                                    ScaffoldMessenger.of(context)
-                                      ..hideCurrentSnackBar()
-                                      ..showSnackBar(
-                                        SnackBar(
-                                          content: Text(l10n.transactionDeleted),
-                                          action: SnackBarAction(
-                                            label: l10n.undo,
-                                            onPressed: () {
-                                              ref.read(
-                                                restoreTransactionUseCaseProvider,
-                                              )(tx.id);
-                                            },
-                                          ),
-                                        ),
-                                      );
-                                  }
+                                },
+                                confirmDismiss: (direction) async {
+                                  return await showTransactionDeleteConfirmDialog(
+                                    context,
+                                  );
+                                },
+                                onDismissed: () async {
+                                  await executeDeleteTransaction(
+                                    context: context,
+                                    ref: ref,
+                                    transaction: tx,
+                                  );
                                 },
                               ),
                             );

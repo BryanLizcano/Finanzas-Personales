@@ -16,6 +16,7 @@ import 'package:finanzas_personales/core/widgets/skeleton_loading.dart';
 import 'package:finanzas_personales/core/widgets/transaction_tile.dart';
 import 'package:finanzas_personales/features/accounts/domain/entities/account.dart';
 import 'package:finanzas_personales/features/transactions/domain/entities/transaction.dart';
+import 'package:finanzas_personales/features/transactions/presentation/widgets/transaction_action_dialogs.dart';
 import 'package:finanzas_personales/l10n/generated/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
@@ -377,6 +378,79 @@ void main() {
       expect(find.text('Entrada'), findsOneWidget);
       expect(find.textContaining('Efectivo'), findsOneWidget);
       expect(find.textContaining('Cuenta • Bancolombia'), findsOneWidget);
+    });
+
+    testWidgets('TransactionTile displays annotation (note) with sticky note icon', (
+      tester,
+    ) async {
+      final now = DateTime(2026, 10, 22);
+      final tx = TransactionEntity(
+        id: 10,
+        kind: TransactionKind.expense,
+        amount: 4500,
+        accountId: 1,
+        occurredAt: now,
+        createdAt: now,
+        updatedAt: now,
+        note: 'Cocaola',
+      );
+
+      await tester.pumpWidget(
+        _buildTestApp(
+          TransactionTile(
+            transaction: tx,
+            currency: Currency.cop,
+            categoryTitle: 'Bebidas',
+            accountName: 'Efectivo',
+            accountType: AccountType.cash,
+          ),
+        ),
+      );
+
+      expect(find.text('Cocaola'), findsOneWidget);
+      expect(find.byIcon(Icons.sticky_note_2_outlined), findsOneWidget);
+    });
+
+    testWidgets('showTransactionDeleteConfirmDialog renders "¿Estás seguro de eliminar?" and buttons "No" and "Sí"', (
+      tester,
+    ) async {
+      bool? dialogResult;
+
+      await tester.pumpWidget(
+        _buildTestApp(
+          Builder(
+            builder: (context) {
+              return ElevatedButton(
+                onPressed: () async {
+                  dialogResult =
+                      await showTransactionDeleteConfirmDialog(context);
+                },
+                child: const Text('Open Dialog'),
+              );
+            },
+          ),
+        ),
+      );
+
+      // Open dialog
+      await tester.tap(find.text('Open Dialog'));
+      await tester.pumpAndSettle();
+
+      expect(find.text('¿Estás seguro de eliminar?'), findsOneWidget);
+      expect(find.text('No'), findsOneWidget);
+      expect(find.text('Sí'), findsOneWidget);
+
+      // Tap 'No'
+      await tester.tap(find.text('No'));
+      await tester.pumpAndSettle();
+      expect(dialogResult, isFalse);
+
+      // Open dialog again and tap 'Sí'
+      await tester.tap(find.text('Open Dialog'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('Sí'));
+      await tester.pumpAndSettle();
+      expect(dialogResult, isTrue);
     });
   });
 }

@@ -178,6 +178,32 @@ class AppLocalizationsEn extends AppLocalizations {
   String get transactionNote => 'Note (optional)';
 
   @override
+  String get transactionAnnotation => 'Annotation';
+
+  @override
+  String get transactionAnnotationHint => 'Annotation e.g. Coca Cola (max 25)';
+
+  @override
+  String get editAnnotation => 'Edit annotation';
+
+  @override
+  String get transactionDetailsTitle => 'Transaction Details';
+
+  @override
+  String get deleteTransactionConfirmTitle =>
+      'Are you sure you want to delete?';
+
+  @override
+  String get deleteTransactionConfirmMessage =>
+      'Do you want to delete this transaction? Your balances will be recalculated automatically.';
+
+  @override
+  String get yes => 'Yes';
+
+  @override
+  String get no => 'No';
+
+  @override
   String get transactionSaved => 'Transaction saved successfully';
 
   @override

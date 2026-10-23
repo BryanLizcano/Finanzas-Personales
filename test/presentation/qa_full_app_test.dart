@@ -351,5 +351,226 @@ void main() {
         expect(find.byType(SettingsPage), findsOneWidget);
       },
     );
+
+    testWidgets(
+      '5. Annotations (max 25 chars) in QuickAddPage, TransactionTile display, and editing via TransactionDetailSheet',
+      (tester) async {
+        tester.view.physicalSize = const Size(1080, 2400);
+        tester.view.devicePixelRatio = 2.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        final container = createContainer();
+        addTearDown(container.dispose);
+
+        final createAcc = container.read(createAccountUseCaseProvider);
+        await createAcc(
+          name: 'Efectivo',
+          type: AccountType.cash,
+          initialBalance: 100000,
+        );
+
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const FinanzasApp(),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Open QuickAddPage via 'Nuevo gasto'
+        await tester.tap(find.text('Nuevo gasto'));
+        await tester.pumpAndSettle();
+        expect(find.byType(QuickAddPage), findsOneWidget);
+
+        // Enter a note > 25 chars to verify LengthLimitingTextInputFormatter(25)
+        final noteField = find.byType(TextField);
+        expect(noteField, findsOneWidget);
+        await tester.enterText(
+          noteField,
+          'Coca Cola bien fria con hielo extra',
+        );
+        await tester.pump();
+
+        // Enter amount 4500
+        await tapKeypadDigit(tester, '4');
+        await tapKeypadDigit(tester, '5');
+        await tapKeypadDigit(tester, '0');
+        await tapKeypadDigit(tester, '0');
+
+        await tester.tap(find.text('Guardar'));
+        await tester.pumpAndSettle();
+
+        // Back on HomeDashboardPage, TransactionTile shows truncated 25-char note
+        expect(find.byType(HomeDashboardPage), findsOneWidget);
+        expect(find.text('Coca Cola bien fria con h'), findsOneWidget);
+        expect(find.byIcon(Icons.sticky_note_2_outlined), findsWidgets);
+
+        // Tap TransactionTile to open showTransactionDetailSheet
+        await tester.tap(find.byType(TransactionTile).first);
+        await tester.pumpAndSettle();
+
+        expect(find.text('Anotación'), findsOneWidget);
+        expect(find.text('Eliminar movimiento'), findsOneWidget);
+
+        // Tap edit icon to edit the annotation
+        await tester.tap(find.byIcon(Icons.edit_outlined));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Editar anotación'), findsOneWidget);
+        final dialogTextField = find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.byType(TextField),
+        );
+        await tester.enterText(dialogTextField, 'Coca Cola Zero');
+        await tester.pump();
+
+        await tester.tap(find.text('Guardar'));
+        await tester.pumpAndSettle();
+
+        // Updated annotation is reflected on HomeDashboardPage
+        expect(find.text('Coca Cola Zero'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      '6. Delete confirmation dialog ("¿Estás seguro de eliminar?" No/Sí) and Undo restore flow',
+      (tester) async {
+        tester.view.physicalSize = const Size(1080, 2400);
+        tester.view.devicePixelRatio = 2.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        final container = createContainer();
+        addTearDown(container.dispose);
+
+        final createAcc = container.read(createAccountUseCaseProvider);
+        await createAcc(
+          name: 'Efectivo',
+          type: AccountType.cash,
+          initialBalance: 100000,
+        );
+
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const FinanzasApp(),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Create an expense of 15000 with note 'Empanadas'
+        await tester.tap(find.text('Entrada rápida'));
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byType(TextField), 'Empanadas');
+        await tapKeypadDigit(tester, '1');
+        await tapKeypadDigit(tester, '5');
+        await tapKeypadDigit(tester, '0');
+        await tapKeypadDigit(tester, '0');
+        await tapKeypadDigit(tester, '0');
+        await tester.tap(find.text('Guardar'));
+        await tester.pumpAndSettle();
+
+        expect(find.text('Empanadas'), findsOneWidget);
+
+        // Open detail sheet and tap 'Eliminar movimiento'
+        await tester.tap(find.byType(TransactionTile).first);
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Eliminar movimiento'));
+        await tester.pumpAndSettle();
+
+        // Verify confirmation modal appears with "¿Estás seguro de eliminar?", "No", and "Sí"
+        expect(find.text('¿Estás seguro de eliminar?'), findsOneWidget);
+        expect(find.text('No'), findsOneWidget);
+        expect(find.text('Sí'), findsOneWidget);
+
+        // Tap 'No' -> cancels deletion, sheet remains open, transaction still exists
+        await tester.tap(find.text('No'));
+        await tester.pumpAndSettle();
+        expect(find.text('Eliminar movimiento'), findsOneWidget);
+
+        // Tap 'Eliminar movimiento' again and confirm with 'Sí'
+        await tester.tap(find.text('Eliminar movimiento'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Sí'));
+        await tester.pumpAndSettle();
+
+        // Transaction is soft-deleted and Undo snackbar is shown
+        expect(find.text('Empanadas'), findsNothing);
+        expect(find.text('Movimiento eliminado'), findsOneWidget);
+        expect(find.text('Deshacer'), findsOneWidget);
+
+        // Tap 'Deshacer' to restore the transaction
+        await tester.tap(find.text('Deshacer'));
+        await tester.pumpAndSettle();
+        expect(find.text('Empanadas'), findsOneWidget);
+      },
+    );
+
+    testWidgets(
+      '7. TransactionsPage search filters by note, category, and account name',
+      (tester) async {
+        tester.view.physicalSize = const Size(1080, 2400);
+        tester.view.devicePixelRatio = 2.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        final container = createContainer();
+        addTearDown(container.dispose);
+
+        final createAcc = container.read(createAccountUseCaseProvider);
+        await createAcc(
+          name: 'Efectivo',
+          type: AccountType.cash,
+          initialBalance: 200000,
+        );
+        await createAcc(
+          name: 'Bancolombia',
+          type: AccountType.bank,
+          initialBalance: 500000,
+        );
+
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const FinanzasApp(),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Add expense with note 'Cafe'
+        await tester.tap(find.text('Entrada rápida'));
+        await tester.pumpAndSettle();
+        await tester.enterText(find.byType(TextField), 'Cafe');
+        await tapKeypadDigit(tester, '5');
+        await tapKeypadDigit(tester, '0');
+        await tapKeypadDigit(tester, '0');
+        await tapKeypadDigit(tester, '0');
+        await tester.tap(find.text('Guardar'));
+        await tester.pumpAndSettle();
+
+        // Navigate to Movimientos tab
+        await tester.tap(find.byType(NavigationDestination).at(1));
+        await tester.pumpAndSettle();
+        expect(find.byType(TransactionsPage), findsOneWidget);
+        expect(find.text('Cafe'), findsOneWidget);
+
+        // Search by note ('cafe')
+        final searchField = find.byType(TextField);
+        await tester.enterText(searchField, 'cafe');
+        await tester.pumpAndSettle();
+        expect(find.text('Cafe'), findsOneWidget);
+
+        // Search by account ('Efectivo')
+        await tester.enterText(searchField, 'Efectivo');
+        await tester.pumpAndSettle();
+        expect(find.text('Cafe'), findsOneWidget);
+
+        // Search by non-matching text
+        await tester.enterText(searchField, 'InexistenteXYZ');
+        await tester.pumpAndSettle();
+        expect(find.text('Cafe'), findsNothing);
+      },
+    );
   });
 }

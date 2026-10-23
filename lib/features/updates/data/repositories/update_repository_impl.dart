@@ -21,7 +21,7 @@ class UpdateRepositoryImpl implements UpdateRepository {
 
   UpdateRepositoryImpl({
     http.Client? client,
-    this.currentVersion = '1.0.0',
+    this.currentVersion = '1.2.0',
     this.owner = defaultOwner,
     this.repo = defaultRepo,
   }) : _client = client ?? http.Client();

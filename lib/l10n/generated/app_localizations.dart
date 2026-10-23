@@ -422,6 +422,54 @@ abstract class AppLocalizations {
   /// **'Nota u observación (opcional)'**
   String get transactionNote;
 
+  /// No description provided for @transactionAnnotation.
+  ///
+  /// In es, this message translates to:
+  /// **'Anotación'**
+  String get transactionAnnotation;
+
+  /// No description provided for @transactionAnnotationHint.
+  ///
+  /// In es, this message translates to:
+  /// **'Anotación ej. Coca Cola (máx 25)'**
+  String get transactionAnnotationHint;
+
+  /// No description provided for @editAnnotation.
+  ///
+  /// In es, this message translates to:
+  /// **'Editar anotación'**
+  String get editAnnotation;
+
+  /// No description provided for @transactionDetailsTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'Detalle del movimiento'**
+  String get transactionDetailsTitle;
+
+  /// No description provided for @deleteTransactionConfirmTitle.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Estás seguro de eliminar?'**
+  String get deleteTransactionConfirmTitle;
+
+  /// No description provided for @deleteTransactionConfirmMessage.
+  ///
+  /// In es, this message translates to:
+  /// **'¿Deseas eliminar este movimiento? Tus saldos se recalcularán automáticamente.'**
+  String get deleteTransactionConfirmMessage;
+
+  /// No description provided for @yes.
+  ///
+  /// In es, this message translates to:
+  /// **'Sí'**
+  String get yes;
+
+  /// No description provided for @no.
+  ///
+  /// In es, this message translates to:
+  /// **'No'**
+  String get no;
+
   /// No description provided for @transactionSaved.
   ///
   /// In es, this message translates to:

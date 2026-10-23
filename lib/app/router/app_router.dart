@@ -138,6 +138,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           final kindParam = state.uri.queryParameters['kind']?.toLowerCase();
           final catParam = state.uri.queryParameters['cat'];
           final amountParam = state.uri.queryParameters['amount'];
+          final noteParam = state.uri.queryParameters['note'];
           final amountUnits = amountParam != null
               ? int.tryParse(amountParam)
               : null;
@@ -152,6 +153,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
               initialKind: initialKind,
               initialCategoryKey: catParam,
               initialAmountUnits: amountUnits,
+              initialNote: noteParam,
             ),
           );
         },

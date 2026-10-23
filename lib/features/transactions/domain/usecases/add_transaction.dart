@@ -67,6 +67,11 @@ class AddTransaction {
       );
     }
 
+    final cleanNote = note.trim();
+    final sanitizedNote = cleanNote.length > 25
+        ? cleanNote.substring(0, 25)
+        : cleanNote;
+
     return _repository.addTransaction(
       kind: kind,
       amount: amount,
@@ -77,7 +82,7 @@ class AddTransaction {
       receivableId: receivableId,
       goalId: goalId,
       occurredAt: occurredAt,
-      note: note.trim(),
+      note: sanitizedNote,
     );
   }
 }

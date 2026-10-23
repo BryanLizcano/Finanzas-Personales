@@ -21,6 +21,7 @@ class TransactionTile extends StatelessWidget {
   final AccountType? toAccountType;
   final VoidCallback? onTap;
   final VoidCallback? onDismissed;
+  final ConfirmDismissCallback? confirmDismiss;
 
   const TransactionTile({
     super.key,
@@ -35,6 +36,7 @@ class TransactionTile extends StatelessWidget {
     this.toAccountType,
     this.onTap,
     this.onDismissed,
+    this.confirmDismiss,
   });
 
   bool _isCash(AccountType? type, String? name) {
@@ -176,16 +178,30 @@ class TransactionTile extends StatelessWidget {
                       ),
                     ],
                   ),
-                  if (!isTransfer && transaction.note.isNotEmpty) ...[
+                  if (transaction.note.isNotEmpty) ...[
                     const SizedBox(height: 4),
-                    Text(
-                      transaction.note,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: colors.onSurfaceMuted,
-                        fontSize: 11.5,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          Icons.sticky_note_2_outlined,
+                          size: 13,
+                          color: colors.onSurfaceMuted,
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            transaction.note,
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: colors.onSurfaceMuted,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ],
@@ -224,6 +240,7 @@ class TransactionTile extends StatelessWidget {
       return Dismissible(
         key: Key('tx_${transaction.id}'),
         direction: DismissDirection.endToStart,
+        confirmDismiss: confirmDismiss,
         background: Container(
           alignment: Alignment.centerRight,
           padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -231,7 +248,21 @@ class TransactionTile extends StatelessWidget {
             color: colors.expense,
             borderRadius: BorderRadius.circular(18),
           ),
-          child: Icon(Icons.delete_rounded, color: colors.onPrimary),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              Text(
+                l10n.delete,
+                style: TextStyle(
+                  color: colors.onPrimary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Icon(Icons.delete_rounded, color: colors.onPrimary, size: 20),
+            ],
+          ),
         ),
         onDismissed: (_) => onDismissed!(),
         child: Card(child: tileBody),
