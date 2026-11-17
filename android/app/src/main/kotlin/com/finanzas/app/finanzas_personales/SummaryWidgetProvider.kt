@@ -5,10 +5,12 @@ import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
 import android.net.Uri
 import android.widget.RemoteViews
 import java.text.NumberFormat
 import java.util.Locale
+import kotlin.math.abs
 
 class SummaryWidgetProvider : AppWidgetProvider() {
     override fun onUpdate(
@@ -22,11 +24,20 @@ class SummaryWidgetProvider : AppWidgetProvider() {
         val monthlyBal = (allPrefs["flutter.widget_monthly_balance"] as? Number)?.toLong() ?: 0L
 
         val formatter = NumberFormat.getNumberInstance(Locale("es", "CO"))
+        val isDeficit = safeAvail < 0L
 
         for (appWidgetId in appWidgetIds) {
             val views = RemoteViews(context.packageName, R.layout.widget_summary)
 
-            views.setTextViewText(R.id.tv_safe_available, "$ " + formatter.format(safeAvail))
+            if (isDeficit) {
+                views.setTextViewText(R.id.tv_safe_label, "Te falta para deudas")
+                views.setTextViewText(R.id.tv_safe_available, "$ " + formatter.format(abs(safeAvail)))
+                views.setTextColor(R.id.tv_safe_available, Color.parseColor("#DC2626"))
+            } else {
+                views.setTextViewText(R.id.tv_safe_label, "Disponible seguro")
+                views.setTextViewText(R.id.tv_safe_available, "$ " + formatter.format(safeAvail))
+                views.setTextColor(R.id.tv_safe_available, Color.parseColor("#0F172A"))
+            }
             views.setTextViewText(R.id.tv_monthly_balance, "Balance mes: $ " + formatter.format(monthlyBal))
 
             val launchIntent = context.packageManager.getLaunchIntentForPackage(context.packageName)
@@ -58,7 +69,7 @@ class SummaryWidgetProvider : AppWidgetProvider() {
         kind: String,
         requestCode: Int
     ): PendingIntent {
-        val uri = Uri.parse("finanzas://quick-add?kind=$kind")
+        val uri = Uri.parse("finanzas://quick-add/quick-add?kind=$kind")
         val intent = Intent(Intent.ACTION_VIEW, uri, context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }

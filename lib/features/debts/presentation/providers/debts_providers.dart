@@ -49,6 +49,7 @@ final suggestedDebtPaymentProvider =
       ref,
       availableAmount,
     ) async {
+      ref.watch(debtsWithBalanceStreamProvider);
       final useCase = ref.watch(suggestDebtPaymentUseCaseProvider);
       final res = await useCase(availableAmount: availableAmount);
       return res.valueOrNull ??

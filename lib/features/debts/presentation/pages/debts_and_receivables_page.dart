@@ -98,7 +98,6 @@ class _DebtsView extends ConsumerWidget {
           }
 
           final now = DateTime.now();
-          final currentDay = now.day;
 
           return ListView(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -177,11 +176,46 @@ class _DebtsView extends ConsumerWidget {
                   units: debt.minPayment,
                   currency: currency,
                 );
+                final feeMoney = Money(
+                  units: debt.effectiveManagementFee,
+                  currency: currency,
+                );
 
                 final progress = item.progressRatio;
+                final daysUntilDue = item.daysUntilDue(now);
+                final isOverdue = daysUntilDue < 0 && item.currentBalance > 0;
+                final isDueSoon =
+                    daysUntilDue >= 0 &&
+                    daysUntilDue <= 3 &&
+                    item.currentBalance > 0;
 
-                final daysUntilDue = debt.dueDay - currentDay;
-                final isDueSoon = daysUntilDue >= 0 && daysUntilDue <= 3;
+                final typeLabel = switch (debt.debtType) {
+                  DebtType.personal => 'Persona',
+                  DebtType.creditCard => 'Tarjeta',
+                  DebtType.loan => 'Préstamo',
+                };
+
+                final termText = switch (debt.frequencyType) {
+                  DebtFrequency.inDays =>
+                    'Plazo: ${debt.intervalDays ?? 7} días',
+                  DebtFrequency.biweekly => 'Cada 15 días',
+                  DebtFrequency.monthly => 'Día ${debt.dueDay} de cada mes',
+                };
+
+                final interestText = debt.interestRateBp > 0
+                    ? '${(debt.interestRateBp / 100).toStringAsFixed(1)}% mes'
+                    : 'Sin interés (0%)';
+
+                final String dueBadgeText;
+                if (daysUntilDue < 0) {
+                  dueBadgeText = 'Vencida hace ${-daysUntilDue} días';
+                } else if (daysUntilDue == 0) {
+                  dueBadgeText = '¡Vence hoy!';
+                } else if (daysUntilDue <= 3) {
+                  dueBadgeText = '${l10n.debtDueSoonAlert} ($daysUntilDue d)';
+                } else {
+                  dueBadgeText = 'Vence en $daysUntilDue días';
+                }
 
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12.0),
@@ -214,12 +248,22 @@ class _DebtsView extends ConsumerWidget {
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: Text(
-                                  debt.creditor,
+                                  '$typeLabel • ${debt.creditor}',
                                   style: Theme.of(context).textTheme.labelSmall
                                       ?.copyWith(
                                         color: colors.debt,
                                         fontWeight: FontWeight.bold,
                                       ),
+                                ),
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.edit_outlined, size: 18),
+                                visualDensity: VisualDensity.compact,
+                                tooltip: 'Editar deuda',
+                                onPressed: () => _showAddDebtDialog(
+                                  context,
+                                  ref,
+                                  existingDebt: debt,
                                 ),
                               ),
                             ],
@@ -253,18 +297,23 @@ class _DebtsView extends ConsumerWidget {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                '${l10n.debtMinPayment}: ${minPayMoney.format()}',
-                                style: Theme.of(context).textTheme.labelSmall,
+                              Flexible(
+                                child: Text(
+                                  debt.effectiveManagementFee > 0
+                                      ? '${l10n.debtMinPayment}: ${minPayMoney.format()} + Manejo: ${feeMoney.format()}'
+                                      : '${l10n.debtMinPayment}: ${minPayMoney.format()}',
+                                  style: Theme.of(context).textTheme.labelSmall,
+                                ),
                               ),
+                              const SizedBox(width: 8),
                               Text(
-                                '${(debt.interestRateBp / 100).toStringAsFixed(1)}% mes • Día ${debt.dueDay}',
+                                '$interestText • $termText',
                                 style: Theme.of(context).textTheme.labelSmall
                                     ?.copyWith(color: colors.onSurfaceMuted),
                               ),
                             ],
                           ),
-                          if (isDueSoon) ...[
+                          if (item.currentBalance > 0) ...[
                             const SizedBox(height: 8),
                             Container(
                               padding: const EdgeInsets.symmetric(
@@ -272,23 +321,32 @@ class _DebtsView extends ConsumerWidget {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: colors.expense.withValues(alpha: 0.12),
+                                color: (isOverdue || isDueSoon)
+                                    ? colors.expense.withValues(alpha: 0.12)
+                                    : colors.primary.withValues(alpha: 0.08),
                                 borderRadius: BorderRadius.circular(6),
                               ),
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
                                   Icon(
-                                    Icons.warning_amber_rounded,
-                                    color: colors.expense,
+                                    (isOverdue || isDueSoon)
+                                        ? Icons.warning_amber_rounded
+                                        : Icons.schedule_rounded,
+                                    color: (isOverdue || isDueSoon)
+                                        ? colors.expense
+                                        : colors.primary,
                                     size: 14,
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    l10n.debtDueSoonAlert,
+                                    dueBadgeText,
                                     style: TextStyle(
-                                      color: colors.expense,
+                                      color: (isOverdue || isDueSoon)
+                                          ? colors.expense
+                                          : colors.primary,
                                       fontSize: 12,
+                                      fontWeight: FontWeight.w600,
                                     ),
                                   ),
                                 ],
@@ -328,101 +386,344 @@ class _DebtsView extends ConsumerWidget {
     );
   }
 
-  void _showAddDebtDialog(BuildContext context, WidgetRef ref) {
+  void _showAddDebtDialog(
+    BuildContext context,
+    WidgetRef ref, {
+    DebtEntity? existingDebt,
+  }) {
     final l10n = AppLocalizations.of(context);
     final currency = ref.read(currencySettingProvider);
+    final factor = currency.decimals == 0 ? 1 : 100;
 
-    final nameCtrl = TextEditingController();
-    final creditorCtrl = TextEditingController();
-    final amountCtrl = TextEditingController();
-    final interestCtrl = TextEditingController(text: '2.0');
-    final minPayCtrl = TextEditingController();
-    final dueDayCtrl = TextEditingController(text: '15');
+    final nameCtrl = TextEditingController(text: existingDebt?.name ?? '');
+    final creditorCtrl = TextEditingController(
+      text: existingDebt?.creditor ?? '',
+    );
+    final amountCtrl = TextEditingController(
+      text: existingDebt != null
+          ? (existingDebt.initialAmount ~/ factor).toString()
+          : '',
+    );
+    final minPayCtrl = TextEditingController(
+      text: existingDebt != null
+          ? (existingDebt.minPayment ~/ factor).toString()
+          : '',
+    );
+    final interestCtrl = TextEditingController(
+      text: existingDebt != null && existingDebt.interestRateBp > 0
+          ? (existingDebt.interestRateBp / 100).toStringAsFixed(1)
+          : '2.0',
+    );
+    final feeCtrl = TextEditingController(
+      text: existingDebt != null && existingDebt.managementFee > 0
+          ? (existingDebt.managementFee ~/ factor).toString()
+          : '',
+    );
+    final dueDayCtrl = TextEditingController(
+      text: (existingDebt?.dueDay ?? 15).toString(),
+    );
+    final intervalDaysCtrl = TextEditingController(
+      text: (existingDebt?.intervalDays ?? 8).toString(),
+    );
+
+    DebtType selectedType = existingDebt?.debtType ?? DebtType.personal;
+    bool hasInterest = existingDebt != null
+        ? existingDebt.interestRateBp > 0
+        : false;
+    bool hasManagementFee = existingDebt?.hasManagementFee ?? false;
+    DebtFrequency selectedFreq =
+        existingDebt?.frequencyType ?? DebtFrequency.monthly;
 
     showDialog<void>(
       context: context,
-      builder: (ctx) => AlertDialog(
-        title: Text(l10n.newDebt),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameCtrl,
-                decoration: InputDecoration(labelText: l10n.debtName),
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setModalState) {
+          final isPersonal = selectedType == DebtType.personal;
+          final isDaysMode =
+              selectedFreq == DebtFrequency.inDays ||
+              selectedFreq == DebtFrequency.biweekly;
+
+          return AlertDialog(
+            title: Text(existingDebt == null ? l10n.newDebt : 'Editar deuda'),
+            content: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'Tipo de deuda',
+                    style: Theme.of(ctx).textTheme.labelSmall
+                        ?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      ChoiceChip(
+                        label: const Text('Persona (0% interés)'),
+                        selected: selectedType == DebtType.personal,
+                        onSelected: (_) => setModalState(() {
+                          selectedType = DebtType.personal;
+                          hasInterest = false;
+                          hasManagementFee = false;
+                        }),
+                      ),
+                      ChoiceChip(
+                        label: const Text('Tarjeta de crédito'),
+                        selected: selectedType == DebtType.creditCard,
+                        onSelected: (_) => setModalState(() {
+                          selectedType = DebtType.creditCard;
+                        }),
+                      ),
+                      ChoiceChip(
+                        label: const Text('Préstamo'),
+                        selected: selectedType == DebtType.loan,
+                        onSelected: (_) => setModalState(() {
+                          selectedType = DebtType.loan;
+                        }),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  TextField(
+                    controller: nameCtrl,
+                    decoration: InputDecoration(labelText: l10n.debtName),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: creditorCtrl,
+                    decoration: InputDecoration(
+                      labelText: isPersonal
+                          ? 'Nombre de la persona'
+                          : l10n.debtCreditor,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: amountCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: l10n.debtInitialAmount,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  TextField(
+                    controller: minPayCtrl,
+                    keyboardType: TextInputType.number,
+                    decoration: InputDecoration(
+                      labelText: l10n.debtMinPayment,
+                      hintText: 'Si es pago único, escribe el mismo monto',
+                    ),
+                  ),
+                  if (!isPersonal) ...[
+                    const SizedBox(height: 8),
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      title: const Text('Sujeta a interés mensual'),
+                      value: hasInterest,
+                      onChanged: (v) => setModalState(() => hasInterest = v),
+                    ),
+                    if (hasInterest) ...[
+                      TextField(
+                        controller: interestCtrl,
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
+                        decoration: InputDecoration(
+                          labelText: l10n.debtInterestRate,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                    SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      dense: true,
+                      title: const Text('Tiene cuota de manejo'),
+                      value: hasManagementFee,
+                      onChanged: (v) =>
+                          setModalState(() => hasManagementFee = v),
+                    ),
+                    if (hasManagementFee) ...[
+                      TextField(
+                        controller: feeCtrl,
+                        keyboardType: TextInputType.number,
+                        decoration: const InputDecoration(
+                          labelText: 'Valor cuota de manejo',
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                  ],
+                  const SizedBox(height: 10),
+                  Text(
+                    'Plazo de pago',
+                    style: Theme.of(ctx).textTheme.labelSmall
+                        ?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 6),
+                  Wrap(
+                    spacing: 6,
+                    runSpacing: 6,
+                    children: [
+                      ChoiceChip(
+                        label: const Text('Mensual'),
+                        selected: !isDaysMode,
+                        onSelected: (_) => setModalState(() {
+                          selectedFreq = DebtFrequency.monthly;
+                        }),
+                      ),
+                      ChoiceChip(
+                        label: const Text('En días (7, 8, 9, 15...)'),
+                        selected: isDaysMode,
+                        onSelected: (_) => setModalState(() {
+                          selectedFreq = DebtFrequency.inDays;
+                        }),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  if (isDaysMode) ...[
+                    Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [7, 8, 9, 15].map((d) {
+                        final isSelected =
+                            intervalDaysCtrl.text.trim() == d.toString();
+                        return ActionChip(
+                          label: Text('$d días'),
+                          backgroundColor: isSelected
+                              ? Theme.of(ctx).colorScheme.primary
+                                    .withValues(alpha: 0.16)
+                              : null,
+                          onPressed: () => setModalState(() {
+                            intervalDaysCtrl.text = d.toString();
+                            selectedFreq = d == 15
+                                ? DebtFrequency.biweekly
+                                : DebtFrequency.inDays;
+                          }),
+                        );
+                      }).toList(),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: intervalDaysCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Plazo en días (ej. 7, 8, 9, 15)',
+                      ),
+                    ),
+                  ] else ...[
+                    TextField(
+                      controller: dueDayCtrl,
+                      keyboardType: TextInputType.number,
+                      decoration: InputDecoration(labelText: l10n.debtDueDay),
+                    ),
+                  ],
+                ],
               ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: creditorCtrl,
-                decoration: InputDecoration(labelText: l10n.debtCreditor),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.of(ctx).pop(),
+                child: Text(l10n.cancel),
               ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: amountCtrl,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(labelText: l10n.debtInitialAmount),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: interestCtrl,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                decoration: InputDecoration(labelText: l10n.debtInterestRate),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: minPayCtrl,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(labelText: l10n.debtMinPayment),
-              ),
-              const SizedBox(height: 8),
-              TextField(
-                controller: dueDayCtrl,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(labelText: l10n.debtDueDay),
+              ElevatedButton(
+                onPressed: () async {
+                  final name = nameCtrl.text.trim();
+                  final creditor = creditorCtrl.text.trim();
+                  final amountMajor = int.tryParse(amountCtrl.text.trim()) ?? 0;
+                  final amountUnits = Money.fromMajor(
+                    amountMajor,
+                    currency,
+                  ).units;
+                  final minPayMajor = int.tryParse(minPayCtrl.text.trim()) ?? 0;
+                  final minPayUnits = minPayMajor > 0
+                      ? Money.fromMajor(minPayMajor, currency).units
+                      : amountUnits;
+
+                  final interestPct = (!isPersonal && hasInterest)
+                      ? (double.tryParse(interestCtrl.text.trim()) ?? 0.0)
+                      : 0.0;
+                  final interestBp = (interestPct * 100).round();
+
+                  final feeMajor = (!isPersonal && hasManagementFee)
+                      ? (int.tryParse(feeCtrl.text.trim()) ?? 0)
+                      : 0;
+                  final feeUnits = Money.fromMajor(feeMajor, currency).units;
+
+                  final dueDay = (int.tryParse(dueDayCtrl.text.trim()) ?? 15)
+                      .clamp(1, 31);
+                  final intervalDays = isDaysMode
+                      ? (int.tryParse(intervalDaysCtrl.text.trim()) ?? 7)
+                      : null;
+
+                  if (existingDebt == null) {
+                    final createDebt = ref.read(createDebtUseCaseProvider);
+                    final res = await createDebt(
+                      name: name,
+                      creditor: creditor,
+                      initialAmount: amountUnits,
+                      interestRateBp: interestBp,
+                      minPayment: minPayUnits,
+                      dueDay: dueDay,
+                      debtType: selectedType,
+                      hasManagementFee: !isPersonal && hasManagementFee,
+                      managementFee: feeUnits,
+                      frequencyType: selectedFreq,
+                      intervalDays: intervalDays,
+                    );
+
+                    res.fold(
+                      onOk: (_) => Navigator.of(ctx).pop(),
+                      onError: (f) => ScaffoldMessenger.of(context)
+                          .showSnackBar(
+                            SnackBar(content: Text(f.toLocalizedMessage(l10n))),
+                          ),
+                    );
+                  } else {
+                    final now = DateTime.now();
+                    final nextDue = isDaysMode
+                        ? DateTime(
+                            now.year,
+                            now.month,
+                            now.day,
+                          ).add(Duration(days: intervalDays ?? 7))
+                        : null;
+                    final repo = ref.read(debtRepositoryProvider);
+                    final res = await repo.updateDebt(
+                      id: existingDebt.id,
+                      name: name,
+                      creditor: creditor,
+                      initialAmount: amountUnits,
+                      interestRateBp: interestBp,
+                      minPayment: minPayUnits,
+                      dueDay: nextDue != null
+                          ? nextDue.day.clamp(1, 31)
+                          : dueDay,
+                      debtType: selectedType,
+                      hasManagementFee: !isPersonal && hasManagementFee,
+                      managementFee: feeUnits,
+                      frequencyType: selectedFreq,
+                      intervalDays: intervalDays,
+                      nextDueDate: nextDue,
+                    );
+
+                    res.fold(
+                      onOk: (_) => Navigator.of(ctx).pop(),
+                      onError: (f) => ScaffoldMessenger.of(context)
+                          .showSnackBar(
+                            SnackBar(content: Text(f.toLocalizedMessage(l10n))),
+                          ),
+                    );
+                  }
+                },
+                child: Text(l10n.save),
               ),
             ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(ctx).pop(),
-            child: Text(l10n.cancel),
-          ),
-          ElevatedButton(
-            onPressed: () async {
-              final name = nameCtrl.text.trim();
-              final creditor = creditorCtrl.text.trim();
-              final amountMajor = int.tryParse(amountCtrl.text.trim()) ?? 0;
-              final amountUnits = Money.fromMajor(amountMajor, currency).units;
-              final interestPct =
-                  double.tryParse(interestCtrl.text.trim()) ?? 0.0;
-              final interestBp = (interestPct * 100).round();
-              final minPayMajor = int.tryParse(minPayCtrl.text.trim()) ?? 0;
-              final minPayUnits = Money.fromMajor(minPayMajor, currency).units;
-              final dueDay = int.tryParse(dueDayCtrl.text.trim()) ?? 1;
-
-              final createDebt = ref.read(createDebtUseCaseProvider);
-              final res = await createDebt(
-                name: name,
-                creditor: creditor,
-                initialAmount: amountUnits,
-                interestRateBp: interestBp,
-                minPayment: minPayUnits,
-                dueDay: dueDay,
-              );
-
-              res.fold(
-                onOk: (_) => Navigator.of(ctx).pop(),
-                onError: (f) => ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(f.toLocalizedMessage(l10n))),
-                ),
-              );
-            },
-            child: Text(l10n.save),
-          ),
-        ],
+          );
+        },
       ),
     );
   }

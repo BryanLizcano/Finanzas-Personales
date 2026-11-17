@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@drawable/widget_background"
-    android:padding="12dp">
+    android:padding="10dp">
 
     <LinearLayout
         android:id="@+id/summary_header_container"
@@ -17,37 +17,44 @@
         android:paddingEnd="4dp">
 
         <TextView
-            android:layout_width="wrap_content"
+            android:id="@+id/tv_safe_label"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Disponible seguro"
             android:textSize="11sp"
+            android:maxLines="1"
+            android:ellipsize="end"
             android:textColor="#64748B" />
 
         <TextView
             android:id="@+id/tv_safe_available"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="$ 0"
-            android:textSize="18sp"
+            android:textSize="16sp"
             android:textStyle="bold"
+            android:maxLines="1"
+            android:ellipsize="end"
             android:textColor="#0F172A"
-            android:layout_marginTop="2dp" />
+            android:layout_marginTop="1dp" />
 
         <TextView
             android:id="@+id/tv_monthly_balance"
-            android:layout_width="wrap_content"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="$ 0"
-            android:textSize="12sp"
+            android:text="Balance mes: $ 0"
+            android:textSize="11sp"
+            android:maxLines="1"
+            android:ellipsize="end"
             android:textColor="#0F766E"
-            android:layout_marginTop="2dp" />
+            android:layout_marginTop="1dp" />
     </LinearLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="38dp"
+        android:layout_height="34dp"
         android:orientation="horizontal"
-        android:layout_marginTop="6dp">
+        android:layout_marginTop="4dp">
 
         <LinearLayout
             android:id="@+id/btn_summary_income"

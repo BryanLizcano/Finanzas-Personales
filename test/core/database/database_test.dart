@@ -14,8 +14,8 @@ void main() {
   });
 
   group('AppDatabase & Initial Migration (T-007)', () {
-    test('creates schema v1 and seeds default data', () async {
-      expect(db.schemaVersion, 1);
+    test('creates schema v2 and seeds default data', () async {
+      expect(db.schemaVersion, 2);
 
       // Check seeded categories
       final categories = await db.select(db.categoriesTable).get();

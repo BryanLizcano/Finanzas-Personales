@@ -6,6 +6,7 @@ import 'package:go_router/go_router.dart';
 import '../../../../app/theme/finance_colors.dart';
 import '../../../../core/errors/failure_message.dart';
 import '../../../../core/money/currency.dart';
+import '../../../../core/money/money.dart';
 import '../../../../core/widgets/amount_input_field.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/icon_helper.dart';
@@ -179,7 +180,7 @@ class _QuickAddPageState extends ConsumerState<QuickAddPage> {
             month: now.month,
           );
 
-          final safeAvail = safeRes.valueOrNull?.safeAvailable ?? 0;
+          final safeAvail = safeRes.valueOrNull?.effectiveAvailable ?? 0;
           final monthlyBal = summaryRes.valueOrNull?.balance ?? 0;
 
           final updateWidgetData = ref.read(updateWidgetDataUseCaseProvider);
@@ -193,7 +194,13 @@ class _QuickAddPageState extends ConsumerState<QuickAddPage> {
 
         if (mounted) {
           ScaffoldMessenger.of(context)
-              .showSnackBar(SnackBar(content: Text(l10n.transactionSaved)));
+            ..hideCurrentSnackBar()
+            ..showSnackBar(
+              SnackBar(
+                content: Text(l10n.transactionSaved),
+                duration: const Duration(milliseconds: 1500),
+              ),
+            );
           if (context.canPop()) {
             context.pop();
           } else {
@@ -340,6 +347,64 @@ class _QuickAddPageState extends ConsumerState<QuickAddPage> {
                         rawInput: _rawAmount,
                         currency: currency,
                         color: isIncome ? colors.income : colors.expense,
+                      ),
+                      Builder(
+                        builder: (context) {
+                          final safeVal = ref
+                              .watch(safeAvailableProvider)
+                              .asData
+                              ?.value;
+                          final typedUnits = _computeUnits(currency);
+                          if (isIncome ||
+                              safeVal == null ||
+                              safeVal.debtMinPayments <= 0) {
+                            return const SizedBox.shrink();
+                          }
+                          final projectedNet =
+                              safeVal.effectiveAvailable - typedUnits;
+                          if (projectedNet >= 0) {
+                            return const SizedBox.shrink();
+                          }
+                          final missingMoney = Money(
+                            units: -projectedNet,
+                            currency: currency,
+                          );
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 6),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: colors.expense.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.warning_amber_rounded,
+                                    size: 15,
+                                    color: colors.expense,
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Expanded(
+                                    child: Text(
+                                      typedUnits > 0
+                                          ? 'Con este gasto te faltarán ${missingMoney.format()} para tus deudas'
+                                          : 'Te faltan ${missingMoney.format()} para cubrir tus deudas',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        fontWeight: FontWeight.w600,
+                                        color: colors.expense,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          );
+                        },
                       ),
 
                       // Account selector strip highlighting Efectivo vs Cuenta

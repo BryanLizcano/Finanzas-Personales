@@ -3,6 +3,7 @@ import '../../../../core/result/result.dart';
 import '../../../categories/domain/repositories/category_repository.dart';
 import '../../../transactions/domain/entities/transaction.dart';
 import '../../../transactions/domain/repositories/transaction_repository.dart';
+import '../entities/debt.dart';
 import '../repositories/debt_repository.dart';
 
 class RegisterDebtPayment {
@@ -55,7 +56,7 @@ class RegisterDebtPayment {
     final categoryId = catRes.valueOrNull?.id;
 
     // 5. RN-14: create expense transaction linked to debt
-    return transactionRepository.addTransaction(
+    final txRes = await transactionRepository.addTransaction(
       kind: TransactionKind.expense,
       amount: amount,
       accountId: accountId,
@@ -64,5 +65,28 @@ class RegisterDebtPayment {
       occurredAt: occurredAt,
       note: note.isEmpty ? 'Abono a deuda: ${debtWithBalance.debt.name}' : note,
     );
+
+    // 6. If payment covers cycle installment and debt still has balance, advance nextDueDate
+    final debt = debtWithBalance.debt;
+    final remainingAfterPayment = debtWithBalance.currentBalance - amount;
+    if (txRes.isOk &&
+        remainingAfterPayment > 0 &&
+        debt.nextDueDate != null &&
+        (debt.frequencyType == DebtFrequency.inDays ||
+            debt.frequencyType == DebtFrequency.biweekly) &&
+        amount >= debtWithBalance.cyclePrincipalPayment) {
+      final stepDays = debt.intervalDays ?? 15;
+      final baseDate = debt.nextDueDate!.isAfter(occurredAt)
+          ? debt.nextDueDate!
+          : DateTime(occurredAt.year, occurredAt.month, occurredAt.day);
+      final updatedNextDue = baseDate.add(Duration(days: stepDays));
+      await debtRepository.updateDebt(
+        id: debtId,
+        nextDueDate: updatedNextDue,
+        dueDay: updatedNextDue.day.clamp(1, 31),
+      );
+    }
+
+    return txRes;
   }
 }

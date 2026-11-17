@@ -14,23 +14,42 @@ import java.io.File
 class MainActivity : FlutterActivity() {
     private val widgetChannelName = "com.finanzas.app/widgets"
     private val installerChannelName = "com.finanzas.app/installer"
+    private var widgetChannel: MethodChannel? = null
+    private var pendingDeepLink: String? = null
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
+        val dataStr = intent.dataString
+        if (!dataStr.isNullOrEmpty() && dataStr.startsWith("finanzas://")) {
+            pendingDeepLink = dataStr
+            widgetChannel?.invokeMethod("onWidgetDeepLink", dataStr)
+        }
     }
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
-        MethodChannel(flutterEngine.dartExecutor.binaryMessenger, widgetChannelName)
-            .setMethodCallHandler { call, result ->
-                if (call.method == "updateWidgets") {
+        val initialDataStr = intent?.dataString
+        if (!initialDataStr.isNullOrEmpty() && initialDataStr.startsWith("finanzas://")) {
+            pendingDeepLink = initialDataStr
+        }
+
+        val channel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, widgetChannelName)
+        widgetChannel = channel
+        channel.setMethodCallHandler { call, result ->
+            when (call.method) {
+                "updateWidgets" -> {
                     refreshHomeWidgets()
                     result.success(true)
-                } else {
-                    result.notImplemented()
                 }
+                "consumeInitialDeepLink" -> {
+                    val link = pendingDeepLink
+                    pendingDeepLink = null
+                    result.success(link)
+                }
+                else -> result.notImplemented()
             }
+        }
 
         MethodChannel(flutterEngine.dartExecutor.binaryMessenger, installerChannelName)
             .setMethodCallHandler { call, result ->

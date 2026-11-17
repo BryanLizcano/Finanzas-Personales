@@ -61,7 +61,7 @@ class HomeDashboardPage extends ConsumerWidget {
           .read(safeAvailableProvider)
           .asData
           ?.value
-          .safeAvailable;
+          .effectiveAvailable;
       final monthlyBalUnits = ref
           .read(
             monthlySummaryProvider((year: currentYear, month: currentMonth)),
@@ -243,14 +243,24 @@ class HomeDashboardPage extends ConsumerWidget {
                       ),
                       safeAvailableAsync.when(
                         data: (res) {
-                          final safeMoney = Money(
-                            units: res.safeAvailable,
-                            currency: currency,
-                          );
-                          final isDeficit = res.isDeficit;
+                          final isDeficit = res.isEffectiveDeficit;
                           final badgeColor = isDeficit
                               ? colors.expense
                               : colors.primary;
+                          final displayMoney = Money(
+                            units: isDeficit
+                                ? res.shortfallForDebts
+                                : res.effectiveAvailable,
+                            currency: currency,
+                          );
+                          final debtObligationsMoney = Money(
+                            units: res.debtMinPayments,
+                            currency: currency,
+                          );
+                          final liquidMoney = Money(
+                            units: res.liquidBalance,
+                            currency: currency,
+                          );
 
                           return Padding(
                             padding: const EdgeInsets.only(top: 14),
@@ -263,36 +273,54 @@ class HomeDashboardPage extends ConsumerWidget {
                                 color: badgeColor.withValues(alpha: 0.08),
                                 borderRadius: BorderRadius.circular(16),
                               ),
-                              child: Row(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Icon(
-                                    isDeficit
-                                        ? Icons.warning_amber_rounded
-                                        : Icons.shield_outlined,
-                                    color: badgeColor,
-                                    size: 18,
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      isDeficit
-                                          ? l10n.homeDeficitWarning
-                                          : l10n.homeSafeAvailable,
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w600,
+                                  Row(
+                                    children: [
+                                      Icon(
+                                        isDeficit
+                                            ? Icons.warning_amber_rounded
+                                            : Icons.shield_outlined,
                                         color: badgeColor,
+                                        size: 18,
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: Text(
+                                          isDeficit
+                                              ? 'Te falta conseguir para deudas'
+                                              : l10n.homeSafeAvailable,
+                                          style: TextStyle(
+                                            fontSize: 12,
+                                            fontWeight: FontWeight.w600,
+                                            color: badgeColor,
+                                          ),
+                                        ),
+                                      ),
+                                      Text(
+                                        displayMoney.format(),
+                                        style: TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w800,
+                                          color: badgeColor,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  if (res.debtMinPayments > 0) ...[
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      isDeficit
+                                          ? 'Tienes ${liquidMoney.format()} • Cuotas por cubrir: ${debtObligationsMoney.format()}'
+                                          : 'Separado para cuotas de deuda: ${debtObligationsMoney.format()}',
+                                      style: TextStyle(
+                                        fontSize: 11,
+                                        color: colors.onSurfaceMuted,
+                                        fontWeight: FontWeight.w500,
                                       ),
                                     ),
-                                  ),
-                                  Text(
-                                    safeMoney.format(),
-                                    style: TextStyle(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w800,
-                                      color: badgeColor,
-                                    ),
-                                  ),
+                                  ],
                                 ],
                               ),
                             ),
@@ -533,110 +561,121 @@ class _ExtraIncomeSplitSection extends ConsumerWidget {
       monthlySummaryProvider((year: currentYear, month: currentMonth)),
     );
     final baseIncomeAsync = ref.watch(baseIncomeStreamProvider);
+    final safeAsync = ref.watch(safeAvailableProvider);
+    final rulesAsync = ref.watch(allocationRulesStreamProvider);
 
     return summaryAsync.when(
       data: (summary) {
         return baseIncomeAsync.when(
           data: (baseIncome) {
-            if (baseIncome <= 0 || summary.totalIncome <= baseIncome) {
+            final safeRes = safeAsync.asData?.value;
+            final rules = rulesAsync.asData?.value ?? [];
+            final debtsPct =
+                rules
+                    .where((r) => r.target.name == 'debts')
+                    .firstOrNull
+                    ?.percent ??
+                50;
+            final savingsPct =
+                rules
+                    .where((r) => r.target.name == 'savings')
+                    .firstOrNull
+                    ?.percent ??
+                20;
+            final freePct = 100 - debtsPct - savingsPct;
+
+            final extraFromBase =
+                (baseIncome > 0 && summary.totalIncome > baseIncome)
+                ? (summary.totalIncome - baseIncome)
+                : 0;
+            final surplusFromCash = safeRes?.surplusAfterDebts ?? 0;
+            final distributableUnits = extraFromBase > 0
+                ? extraFromBase
+                : ((safeRes != null && safeRes.debtMinPayments > 0)
+                      ? surplusFromCash
+                      : 0);
+
+            if (distributableUnits <= 0) {
               return const SizedBox.shrink();
             }
 
-            final computeSplit = ref.watch(
-              computeExtraIncomeSplitUseCaseProvider,
+            final debtsUnits = (distributableUnits * debtsPct) ~/ 100;
+            final savingsUnits = (distributableUnits * savingsPct) ~/ 100;
+            final freeUnits = distributableUnits - debtsUnits - savingsUnits;
+
+            final extraMoney = Money(
+              units: distributableUnits,
+              currency: currency,
             );
-            return FutureBuilder(
-              future: computeSplit(actualMonthlyIncome: summary.totalIncome),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData || snapshot.data?.isError == true) {
-                  return const SizedBox.shrink();
-                }
+            final debtsMoney = Money(units: debtsUnits, currency: currency);
+            final savingsMoney = Money(units: savingsUnits, currency: currency);
+            final freeMoney = Money(units: freeUnits, currency: currency);
 
-                final split = snapshot.data!.valueOrNull!;
-                if (split.hasDeficit || split.totalExtraIncome <= 0) {
-                  return const SizedBox.shrink();
-                }
+            final subtitle = extraFromBase > 0
+                ? 'Superaste tu ingreso base por ${extraMoney.format()}. Sugerencia de reparto:'
+                : 'Después de cubrir cuotas te sobran ${extraMoney.format()}. Cómo distribuirlo:';
 
-                final extraMoney = Money(
-                  units: split.totalExtraIncome,
-                  currency: currency,
-                );
-                final debtsMoney = Money(
-                  units: split.debtsAmount,
-                  currency: currency,
-                );
-                final savingsMoney = Money(
-                  units: split.savingsAmount,
-                  currency: currency,
-                );
-                final freeMoney = Money(
-                  units: split.freeAmount,
-                  currency: currency,
-                );
-
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 14),
-                  child: Card(
-                    color: colors.income.withValues(alpha: 0.08),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 14),
+              child: Card(
+                color: colors.income.withValues(alpha: 0.08),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
                         children: [
-                          Row(
-                            children: [
-                              Icon(
-                                Icons.call_split_rounded,
-                                color: colors.income,
-                                size: 20,
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                l10n.homeExtraIncomeSplit,
-                                style: Theme.of(context).textTheme.bodyLarge
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: colors.income,
-                                    ),
-                              ),
-                            ],
+                          Icon(
+                            Icons.call_split_rounded,
+                            color: colors.income,
+                            size: 20,
                           ),
-                          const SizedBox(height: 6),
+                          const SizedBox(width: 8),
                           Text(
-                            'Superaste tu ingreso base por ${extraMoney.format()}. Sugerencia de reparto (RN-10):',
-                            style: TextStyle(
-                              color: colors.onSurfaceMuted,
-                              fontSize: 13,
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                          Row(
-                            children: [
-                              _splitBadge(
-                                l10n.homeSplitDebts(50),
-                                debtsMoney,
-                                colors.debt,
-                              ),
-                              const SizedBox(width: 6),
-                              _splitBadge(
-                                l10n.homeSplitSavings(20),
-                                savingsMoney,
-                                colors.savings,
-                              ),
-                              const SizedBox(width: 6),
-                              _splitBadge(
-                                l10n.homeSplitFree(30),
-                                freeMoney,
-                                colors.income,
-                              ),
-                            ],
+                            l10n.homeExtraIncomeSplit,
+                            style: Theme.of(context).textTheme.bodyLarge
+                                ?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: colors.income,
+                                ),
                           ),
                         ],
                       ),
-                    ),
+                      const SizedBox(height: 6),
+                      Text(
+                        subtitle,
+                        style: TextStyle(
+                          color: colors.onSurfaceMuted,
+                          fontSize: 13,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          _splitBadge(
+                            l10n.homeSplitDebts(debtsPct),
+                            debtsMoney,
+                            colors.debt,
+                          ),
+                          const SizedBox(width: 6),
+                          _splitBadge(
+                            l10n.homeSplitSavings(savingsPct),
+                            savingsMoney,
+                            colors.savings,
+                          ),
+                          const SizedBox(width: 6),
+                          _splitBadge(
+                            l10n.homeSplitFree(freePct),
+                            freeMoney,
+                            colors.income,
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
-                );
-              },
+                ),
+              ),
             );
           },
           loading: () => const SizedBox.shrink(),

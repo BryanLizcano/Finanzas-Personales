@@ -1004,6 +1004,79 @@ class $DebtsTableTable extends DebtsTable
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _debtTypeMeta = const VerificationMeta(
+    'debtType',
+  );
+  @override
+  late final GeneratedColumn<String> debtType = GeneratedColumn<String>(
+    'debt_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('personal'),
+  );
+  static const VerificationMeta _hasManagementFeeMeta = const VerificationMeta(
+    'hasManagementFee',
+  );
+  @override
+  late final GeneratedColumn<bool> hasManagementFee = GeneratedColumn<bool>(
+    'has_management_fee',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("has_management_fee" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  static const VerificationMeta _managementFeeMeta = const VerificationMeta(
+    'managementFee',
+  );
+  @override
+  late final GeneratedColumn<int> managementFee = GeneratedColumn<int>(
+    'management_fee',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultValue: const Constant(0),
+  );
+  static const VerificationMeta _frequencyTypeMeta = const VerificationMeta(
+    'frequencyType',
+  );
+  @override
+  late final GeneratedColumn<String> frequencyType = GeneratedColumn<String>(
+    'frequency_type',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+    defaultValue: const Constant('monthly'),
+  );
+  static const VerificationMeta _intervalDaysMeta = const VerificationMeta(
+    'intervalDays',
+  );
+  @override
+  late final GeneratedColumn<int> intervalDays = GeneratedColumn<int>(
+    'interval_days',
+    aliasedName,
+    true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+  );
+  static const VerificationMeta _nextDueDateMeta = const VerificationMeta(
+    'nextDueDate',
+  );
+  @override
+  late final GeneratedColumn<DateTime> nextDueDate = GeneratedColumn<DateTime>(
+    'next_due_date',
+    aliasedName,
+    true,
+    type: DriftSqlType.dateTime,
+    requiredDuringInsert: false,
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -1015,6 +1088,12 @@ class $DebtsTableTable extends DebtsTable
     dueDay,
     priority,
     archived,
+    debtType,
+    hasManagementFee,
+    managementFee,
+    frequencyType,
+    intervalDays,
+    nextDueDate,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -1099,6 +1178,57 @@ class $DebtsTableTable extends DebtsTable
         archived.isAcceptableOrUnknown(data['archived']!, _archivedMeta),
       );
     }
+    if (data.containsKey('debt_type')) {
+      context.handle(
+        _debtTypeMeta,
+        debtType.isAcceptableOrUnknown(data['debt_type']!, _debtTypeMeta),
+      );
+    }
+    if (data.containsKey('has_management_fee')) {
+      context.handle(
+        _hasManagementFeeMeta,
+        hasManagementFee.isAcceptableOrUnknown(
+          data['has_management_fee']!,
+          _hasManagementFeeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('management_fee')) {
+      context.handle(
+        _managementFeeMeta,
+        managementFee.isAcceptableOrUnknown(
+          data['management_fee']!,
+          _managementFeeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('frequency_type')) {
+      context.handle(
+        _frequencyTypeMeta,
+        frequencyType.isAcceptableOrUnknown(
+          data['frequency_type']!,
+          _frequencyTypeMeta,
+        ),
+      );
+    }
+    if (data.containsKey('interval_days')) {
+      context.handle(
+        _intervalDaysMeta,
+        intervalDays.isAcceptableOrUnknown(
+          data['interval_days']!,
+          _intervalDaysMeta,
+        ),
+      );
+    }
+    if (data.containsKey('next_due_date')) {
+      context.handle(
+        _nextDueDateMeta,
+        nextDueDate.isAcceptableOrUnknown(
+          data['next_due_date']!,
+          _nextDueDateMeta,
+        ),
+      );
+    }
     return context;
   }
 
@@ -1144,6 +1274,38 @@ class $DebtsTableTable extends DebtsTable
         DriftSqlType.bool,
         data['${effectivePrefix}archived'],
       )!,
+      debtType:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}debt_type'],
+          ) ??
+          'personal',
+      hasManagementFee:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.bool,
+            data['${effectivePrefix}has_management_fee'],
+          ) ??
+          false,
+      managementFee:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.int,
+            data['${effectivePrefix}management_fee'],
+          ) ??
+          0,
+      frequencyType:
+          attachedDatabase.typeMapping.read(
+            DriftSqlType.string,
+            data['${effectivePrefix}frequency_type'],
+          ) ??
+          'monthly',
+      intervalDays: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}interval_days'],
+      ),
+      nextDueDate: attachedDatabase.typeMapping.read(
+        DriftSqlType.dateTime,
+        data['${effectivePrefix}next_due_date'],
+      ),
     );
   }
 
@@ -1163,6 +1325,12 @@ class DebtsTableData extends DataClass implements Insertable<DebtsTableData> {
   final int dueDay;
   final int priority;
   final bool archived;
+  final String debtType;
+  final bool hasManagementFee;
+  final int managementFee;
+  final String frequencyType;
+  final int? intervalDays;
+  final DateTime? nextDueDate;
   const DebtsTableData({
     required this.id,
     required this.name,
@@ -1173,6 +1341,12 @@ class DebtsTableData extends DataClass implements Insertable<DebtsTableData> {
     required this.dueDay,
     required this.priority,
     required this.archived,
+    this.debtType = 'personal',
+    this.hasManagementFee = false,
+    this.managementFee = 0,
+    this.frequencyType = 'monthly',
+    this.intervalDays,
+    this.nextDueDate,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1186,6 +1360,16 @@ class DebtsTableData extends DataClass implements Insertable<DebtsTableData> {
     map['due_day'] = Variable<int>(dueDay);
     map['priority'] = Variable<int>(priority);
     map['archived'] = Variable<bool>(archived);
+    map['debt_type'] = Variable<String>(debtType);
+    map['has_management_fee'] = Variable<bool>(hasManagementFee);
+    map['management_fee'] = Variable<int>(managementFee);
+    map['frequency_type'] = Variable<String>(frequencyType);
+    if (!nullToAbsent || intervalDays != null) {
+      map['interval_days'] = Variable<int>(intervalDays);
+    }
+    if (!nullToAbsent || nextDueDate != null) {
+      map['next_due_date'] = Variable<DateTime>(nextDueDate);
+    }
     return map;
   }
 
@@ -1200,6 +1384,16 @@ class DebtsTableData extends DataClass implements Insertable<DebtsTableData> {
       dueDay: Value(dueDay),
       priority: Value(priority),
       archived: Value(archived),
+      debtType: Value(debtType),
+      hasManagementFee: Value(hasManagementFee),
+      managementFee: Value(managementFee),
+      frequencyType: Value(frequencyType),
+      intervalDays: intervalDays == null && nullToAbsent
+          ? const Value.absent()
+          : Value(intervalDays),
+      nextDueDate: nextDueDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(nextDueDate),
     );
   }
 
@@ -1218,6 +1412,20 @@ class DebtsTableData extends DataClass implements Insertable<DebtsTableData> {
       dueDay: serializer.fromJson<int>(json['dueDay']),
       priority: serializer.fromJson<int>(json['priority']),
       archived: serializer.fromJson<bool>(json['archived']),
+      debtType: json['debtType'] != null
+          ? serializer.fromJson<String>(json['debtType'])
+          : 'personal',
+      hasManagementFee: json['hasManagementFee'] != null
+          ? serializer.fromJson<bool>(json['hasManagementFee'])
+          : false,
+      managementFee: json['managementFee'] != null
+          ? serializer.fromJson<int>(json['managementFee'])
+          : 0,
+      frequencyType: json['frequencyType'] != null
+          ? serializer.fromJson<String>(json['frequencyType'])
+          : 'monthly',
+      intervalDays: serializer.fromJson<int?>(json['intervalDays']),
+      nextDueDate: serializer.fromJson<DateTime?>(json['nextDueDate']),
     );
   }
   @override
@@ -1233,6 +1441,12 @@ class DebtsTableData extends DataClass implements Insertable<DebtsTableData> {
       'dueDay': serializer.toJson<int>(dueDay),
       'priority': serializer.toJson<int>(priority),
       'archived': serializer.toJson<bool>(archived),
+      'debtType': serializer.toJson<String>(debtType),
+      'hasManagementFee': serializer.toJson<bool>(hasManagementFee),
+      'managementFee': serializer.toJson<int>(managementFee),
+      'frequencyType': serializer.toJson<String>(frequencyType),
+      'intervalDays': serializer.toJson<int?>(intervalDays),
+      'nextDueDate': serializer.toJson<DateTime?>(nextDueDate),
     };
   }
 
@@ -1246,6 +1460,12 @@ class DebtsTableData extends DataClass implements Insertable<DebtsTableData> {
     int? dueDay,
     int? priority,
     bool? archived,
+    String? debtType,
+    bool? hasManagementFee,
+    int? managementFee,
+    String? frequencyType,
+    Value<int?> intervalDays = const Value.absent(),
+    Value<DateTime?> nextDueDate = const Value.absent(),
   }) => DebtsTableData(
     id: id ?? this.id,
     name: name ?? this.name,
@@ -1256,6 +1476,12 @@ class DebtsTableData extends DataClass implements Insertable<DebtsTableData> {
     dueDay: dueDay ?? this.dueDay,
     priority: priority ?? this.priority,
     archived: archived ?? this.archived,
+    debtType: debtType ?? this.debtType,
+    hasManagementFee: hasManagementFee ?? this.hasManagementFee,
+    managementFee: managementFee ?? this.managementFee,
+    frequencyType: frequencyType ?? this.frequencyType,
+    intervalDays: intervalDays.present ? intervalDays.value : this.intervalDays,
+    nextDueDate: nextDueDate.present ? nextDueDate.value : this.nextDueDate,
   );
   DebtsTableData copyWithCompanion(DebtsTableCompanion data) {
     return DebtsTableData(
@@ -1274,6 +1500,22 @@ class DebtsTableData extends DataClass implements Insertable<DebtsTableData> {
       dueDay: data.dueDay.present ? data.dueDay.value : this.dueDay,
       priority: data.priority.present ? data.priority.value : this.priority,
       archived: data.archived.present ? data.archived.value : this.archived,
+      debtType: data.debtType.present ? data.debtType.value : this.debtType,
+      hasManagementFee: data.hasManagementFee.present
+          ? data.hasManagementFee.value
+          : this.hasManagementFee,
+      managementFee: data.managementFee.present
+          ? data.managementFee.value
+          : this.managementFee,
+      frequencyType: data.frequencyType.present
+          ? data.frequencyType.value
+          : this.frequencyType,
+      intervalDays: data.intervalDays.present
+          ? data.intervalDays.value
+          : this.intervalDays,
+      nextDueDate: data.nextDueDate.present
+          ? data.nextDueDate.value
+          : this.nextDueDate,
     );
   }
 
@@ -1288,7 +1530,13 @@ class DebtsTableData extends DataClass implements Insertable<DebtsTableData> {
           ..write('minPayment: $minPayment, ')
           ..write('dueDay: $dueDay, ')
           ..write('priority: $priority, ')
-          ..write('archived: $archived')
+          ..write('archived: $archived, ')
+          ..write('debtType: $debtType, ')
+          ..write('hasManagementFee: $hasManagementFee, ')
+          ..write('managementFee: $managementFee, ')
+          ..write('frequencyType: $frequencyType, ')
+          ..write('intervalDays: $intervalDays, ')
+          ..write('nextDueDate: $nextDueDate')
           ..write(')'))
         .toString();
   }
@@ -1304,6 +1552,12 @@ class DebtsTableData extends DataClass implements Insertable<DebtsTableData> {
     dueDay,
     priority,
     archived,
+    debtType,
+    hasManagementFee,
+    managementFee,
+    frequencyType,
+    intervalDays,
+    nextDueDate,
   );
   @override
   bool operator ==(Object other) =>
@@ -1317,7 +1571,13 @@ class DebtsTableData extends DataClass implements Insertable<DebtsTableData> {
           other.minPayment == this.minPayment &&
           other.dueDay == this.dueDay &&
           other.priority == this.priority &&
-          other.archived == this.archived);
+          other.archived == this.archived &&
+          other.debtType == this.debtType &&
+          other.hasManagementFee == this.hasManagementFee &&
+          other.managementFee == this.managementFee &&
+          other.frequencyType == this.frequencyType &&
+          other.intervalDays == this.intervalDays &&
+          other.nextDueDate == this.nextDueDate);
 }
 
 class DebtsTableCompanion extends UpdateCompanion<DebtsTableData> {
@@ -1330,6 +1590,12 @@ class DebtsTableCompanion extends UpdateCompanion<DebtsTableData> {
   final Value<int> dueDay;
   final Value<int> priority;
   final Value<bool> archived;
+  final Value<String> debtType;
+  final Value<bool> hasManagementFee;
+  final Value<int> managementFee;
+  final Value<String> frequencyType;
+  final Value<int?> intervalDays;
+  final Value<DateTime?> nextDueDate;
   const DebtsTableCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -1340,6 +1606,12 @@ class DebtsTableCompanion extends UpdateCompanion<DebtsTableData> {
     this.dueDay = const Value.absent(),
     this.priority = const Value.absent(),
     this.archived = const Value.absent(),
+    this.debtType = const Value.absent(),
+    this.hasManagementFee = const Value.absent(),
+    this.managementFee = const Value.absent(),
+    this.frequencyType = const Value.absent(),
+    this.intervalDays = const Value.absent(),
+    this.nextDueDate = const Value.absent(),
   });
   DebtsTableCompanion.insert({
     this.id = const Value.absent(),
@@ -1351,6 +1623,12 @@ class DebtsTableCompanion extends UpdateCompanion<DebtsTableData> {
     required int dueDay,
     required int priority,
     this.archived = const Value.absent(),
+    this.debtType = const Value.absent(),
+    this.hasManagementFee = const Value.absent(),
+    this.managementFee = const Value.absent(),
+    this.frequencyType = const Value.absent(),
+    this.intervalDays = const Value.absent(),
+    this.nextDueDate = const Value.absent(),
   }) : name = Value(name),
        creditor = Value(creditor),
        initialAmount = Value(initialAmount),
@@ -1368,6 +1646,12 @@ class DebtsTableCompanion extends UpdateCompanion<DebtsTableData> {
     Expression<int>? dueDay,
     Expression<int>? priority,
     Expression<bool>? archived,
+    Expression<String>? debtType,
+    Expression<bool>? hasManagementFee,
+    Expression<int>? managementFee,
+    Expression<String>? frequencyType,
+    Expression<int>? intervalDays,
+    Expression<DateTime>? nextDueDate,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -1379,6 +1663,12 @@ class DebtsTableCompanion extends UpdateCompanion<DebtsTableData> {
       if (dueDay != null) 'due_day': dueDay,
       if (priority != null) 'priority': priority,
       if (archived != null) 'archived': archived,
+      if (debtType != null) 'debt_type': debtType,
+      if (hasManagementFee != null) 'has_management_fee': hasManagementFee,
+      if (managementFee != null) 'management_fee': managementFee,
+      if (frequencyType != null) 'frequency_type': frequencyType,
+      if (intervalDays != null) 'interval_days': intervalDays,
+      if (nextDueDate != null) 'next_due_date': nextDueDate,
     });
   }
 
@@ -1392,6 +1682,12 @@ class DebtsTableCompanion extends UpdateCompanion<DebtsTableData> {
     Value<int>? dueDay,
     Value<int>? priority,
     Value<bool>? archived,
+    Value<String>? debtType,
+    Value<bool>? hasManagementFee,
+    Value<int>? managementFee,
+    Value<String>? frequencyType,
+    Value<int?>? intervalDays,
+    Value<DateTime?>? nextDueDate,
   }) {
     return DebtsTableCompanion(
       id: id ?? this.id,
@@ -1403,6 +1699,12 @@ class DebtsTableCompanion extends UpdateCompanion<DebtsTableData> {
       dueDay: dueDay ?? this.dueDay,
       priority: priority ?? this.priority,
       archived: archived ?? this.archived,
+      debtType: debtType ?? this.debtType,
+      hasManagementFee: hasManagementFee ?? this.hasManagementFee,
+      managementFee: managementFee ?? this.managementFee,
+      frequencyType: frequencyType ?? this.frequencyType,
+      intervalDays: intervalDays ?? this.intervalDays,
+      nextDueDate: nextDueDate ?? this.nextDueDate,
     );
   }
 
@@ -1436,6 +1738,24 @@ class DebtsTableCompanion extends UpdateCompanion<DebtsTableData> {
     if (archived.present) {
       map['archived'] = Variable<bool>(archived.value);
     }
+    if (debtType.present) {
+      map['debt_type'] = Variable<String>(debtType.value);
+    }
+    if (hasManagementFee.present) {
+      map['has_management_fee'] = Variable<bool>(hasManagementFee.value);
+    }
+    if (managementFee.present) {
+      map['management_fee'] = Variable<int>(managementFee.value);
+    }
+    if (frequencyType.present) {
+      map['frequency_type'] = Variable<String>(frequencyType.value);
+    }
+    if (intervalDays.present) {
+      map['interval_days'] = Variable<int>(intervalDays.value);
+    }
+    if (nextDueDate.present) {
+      map['next_due_date'] = Variable<DateTime>(nextDueDate.value);
+    }
     return map;
   }
 
@@ -1450,7 +1770,13 @@ class DebtsTableCompanion extends UpdateCompanion<DebtsTableData> {
           ..write('minPayment: $minPayment, ')
           ..write('dueDay: $dueDay, ')
           ..write('priority: $priority, ')
-          ..write('archived: $archived')
+          ..write('archived: $archived, ')
+          ..write('debtType: $debtType, ')
+          ..write('hasManagementFee: $hasManagementFee, ')
+          ..write('managementFee: $managementFee, ')
+          ..write('frequencyType: $frequencyType, ')
+          ..write('intervalDays: $intervalDays, ')
+          ..write('nextDueDate: $nextDueDate')
           ..write(')'))
         .toString();
   }

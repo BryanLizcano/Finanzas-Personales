@@ -36,7 +36,7 @@ class QuickIncomeWidgetProvider : AppWidgetProvider() {
         cat: String,
         requestCode: Int
     ): PendingIntent {
-        val uri = Uri.parse("finanzas://quick-add?kind=$kind&cat=$cat")
+        val uri = Uri.parse("finanzas://quick-add/quick-add?kind=$kind&cat=$cat")
         val intent = Intent(Intent.ACTION_VIEW, uri, context, MainActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         }

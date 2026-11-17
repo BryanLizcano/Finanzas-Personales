@@ -16,7 +16,7 @@ class BackupRepositoryImpl implements BackupRepository {
   final AppDatabase _db;
   final String _appVersion;
 
-  BackupRepositoryImpl(this._db, [this._appVersion = '1.2.1']);
+  BackupRepositoryImpl(this._db, [this._appVersion = '1.3.0']);
 
   @override
   Future<Result<String, Failure>> createBackupJson() async {
@@ -89,6 +89,12 @@ class BackupRepositoryImpl implements BackupRepository {
                 'due_day': d.dueDay,
                 'priority': d.priority,
                 'archived': d.archived,
+                'debt_type': d.debtType,
+                'has_management_fee': d.hasManagementFee,
+                'management_fee': d.managementFee,
+                'frequency_type': d.frequencyType,
+                'interval_days': d.intervalDays,
+                'next_due_date': d.nextDueDate?.toIso8601String(),
               },
             )
             .toList(),
@@ -286,6 +292,20 @@ class BackupRepositoryImpl implements BackupRepository {
                   dueDay: m['due_day'] as int,
                   priority: m['priority'] as int,
                   archived: Value(m['archived'] as bool? ?? false),
+                  debtType: Value(m['debt_type'] as String? ?? 'personal'),
+                  hasManagementFee: Value(
+                    m['has_management_fee'] as bool? ?? false,
+                  ),
+                  managementFee: Value(m['management_fee'] as int? ?? 0),
+                  frequencyType: Value(
+                    m['frequency_type'] as String? ?? 'monthly',
+                  ),
+                  intervalDays: m['interval_days'] != null
+                      ? Value(m['interval_days'] as int)
+                      : const Value.absent(),
+                  nextDueDate: m['next_due_date'] != null
+                      ? Value(DateTime.parse(m['next_due_date'] as String))
+                      : const Value.absent(),
                 ),
               );
         }

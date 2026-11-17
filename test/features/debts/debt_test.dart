@@ -248,6 +248,62 @@ void main() {
         expect(upcoming.length, 1);
         expect(upcoming.first.debt.name, 'Deuda Próxima');
       });
+
+      test('supports personal debt (0% interest, no fee), credit card with management fee, and custom days terms (7, 8, 9, 15 days)', () async {
+        // 1. Personal debt in 8 days (even if caller passes interest or fee, personal forces 0)
+        final personalRes = await createDebt(
+          name: 'Préstamo primo',
+          creditor: 'Juan',
+          initialAmount: 80000,
+          interestRateBp: 250,
+          minPayment: 80000,
+          dueDay: 1,
+          debtType: DebtType.personal,
+          hasManagementFee: true,
+          managementFee: 15000,
+          frequencyType: DebtFrequency.inDays,
+          intervalDays: 8,
+        );
+        expect(personalRes.isOk, isTrue);
+        final personal = personalRes.valueOrNull!;
+        expect(personal.debtType, DebtType.personal);
+        expect(personal.interestRateBp, 0);
+        expect(personal.effectiveManagementFee, 0);
+        expect(personal.frequencyType, DebtFrequency.inDays);
+        expect(personal.intervalDays, 8);
+        expect(personal.nextDueDate, isNotNull);
+
+        final personalWithBal = (await debtRepository.getDebtWithBalance(
+          personal.id,
+        )).valueOrNull!;
+        expect(personalWithBal.daysUntilDue(DateTime.now()), 8);
+        expect(personalWithBal.totalCycleObligation, 80000);
+
+        // 2. Credit card with interest and management fee in 15 days
+        final cardRes = await createDebt(
+          name: 'Visa Nu',
+          creditor: 'Nu',
+          initialAmount: 400000,
+          interestRateBp: 220,
+          minPayment: 100000,
+          dueDay: 15,
+          debtType: DebtType.creditCard,
+          hasManagementFee: true,
+          managementFee: 25000,
+          frequencyType: DebtFrequency.biweekly,
+          intervalDays: 15,
+        );
+        expect(cardRes.isOk, isTrue);
+        final card = cardRes.valueOrNull!;
+        expect(card.debtType, DebtType.creditCard);
+        expect(card.effectiveManagementFee, 25000);
+
+        final cardWithBal = (await debtRepository.getDebtWithBalance(card.id))
+            .valueOrNull!;
+        // Total cycle obligation = 100000 (minPayment) + 25000 (managementFee) = 125000
+        expect(cardWithBal.totalCycleObligation, 125000);
+        expect(cardWithBal.daysUntilDue(DateTime.now()), 15);
+      });
     },
   );
 }

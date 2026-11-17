@@ -4,7 +4,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:background="@drawable/widget_background"
-    android:padding="10dp">
+    android:padding="8dp">
 
     <!-- Fila superior: Entrada rápida | Nueva transferencia -->
     <LinearLayout
@@ -12,87 +12,85 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:orientation="horizontal"
-        android:layout_marginBottom="5dp">
+        android:layout_marginBottom="4dp">
 
-        <!-- Tarjeta 1: Entrada rápida (Amarillo) -->
-        <LinearLayout
+        <!-- Tarjeta 1: Entrada rápida (Ocre) -->
+        <RelativeLayout
             android:id="@+id/btn_quick_entry"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:orientation="vertical"
             android:background="@drawable/bg_widget_quick_entry"
-            android:padding="12dp"
-            android:layout_marginEnd="5dp">
+            android:padding="10dp"
+            android:layout_marginEnd="4dp">
 
             <FrameLayout
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentStart="true"
                 android:background="@drawable/bg_widget_icon_circle">
 
                 <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_widget_bolt"
                     android:contentDescription="Entrada rápida" />
             </FrameLayout>
 
-            <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
-
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentEnd="true"
                 android:text="Entrada rápida"
                 android:textColor="#FFFFFF"
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:textStyle="bold"
-                android:singleLine="true"
+                android:maxLines="1"
                 android:ellipsize="end" />
-        </LinearLayout>
+        </RelativeLayout>
 
-        <!-- Tarjeta 2: Nueva transferencia (Azul claro) -->
-        <LinearLayout
+        <!-- Tarjeta 2: Nueva transferencia (Azul acero) -->
+        <RelativeLayout
             android:id="@+id/btn_new_transfer"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:orientation="vertical"
             android:background="@drawable/bg_widget_transfer"
-            android:padding="12dp"
-            android:layout_marginStart="5dp">
+            android:padding="10dp"
+            android:layout_marginStart="4dp">
 
             <FrameLayout
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentStart="true"
                 android:background="@drawable/bg_widget_icon_circle">
 
                 <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_widget_transfer"
                     android:contentDescription="Nueva transferencia" />
             </FrameLayout>
 
-            <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
-
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Nueva transferencia"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentEnd="true"
+                android:text="Transferencia"
                 android:textColor="#FFFFFF"
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:textStyle="bold"
-                android:singleLine="true"
+                android:maxLines="1"
                 android:ellipsize="end" />
-        </LinearLayout>
+        </RelativeLayout>
     </LinearLayout>
 
     <!-- Fila inferior: Ingresos nuevos | Nuevo gasto -->
@@ -101,87 +99,85 @@
         android:layout_height="0dp"
         android:layout_weight="1"
         android:orientation="horizontal"
-        android:layout_marginTop="5dp">
+        android:layout_marginTop="4dp">
 
-        <!-- Tarjeta 3: Ingresos nuevos (Turquesa/Menta) -->
-        <LinearLayout
+        <!-- Tarjeta 3: Ingresos nuevos (Menta) -->
+        <RelativeLayout
             android:id="@+id/btn_new_income"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:orientation="vertical"
             android:background="@drawable/bg_widget_income"
-            android:padding="12dp"
-            android:layout_marginEnd="5dp">
+            android:padding="10dp"
+            android:layout_marginEnd="4dp">
 
             <FrameLayout
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentStart="true"
                 android:background="@drawable/bg_widget_icon_circle">
 
                 <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_widget_plus"
                     android:contentDescription="Ingresos nuevos" />
             </FrameLayout>
 
-            <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
-
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentEnd="true"
                 android:text="Ingresos nuevos"
                 android:textColor="#FFFFFF"
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:textStyle="bold"
-                android:singleLine="true"
+                android:maxLines="1"
                 android:ellipsize="end" />
-        </LinearLayout>
+        </RelativeLayout>
 
-        <!-- Tarjeta 4: Nuevo gasto (Coral/Rojo) -->
-        <LinearLayout
+        <!-- Tarjeta 4: Nuevo gasto (Coral) -->
+        <RelativeLayout
             android:id="@+id/btn_new_expense"
             android:layout_width="0dp"
             android:layout_height="match_parent"
             android:layout_weight="1"
-            android:orientation="vertical"
             android:background="@drawable/bg_widget_expense"
-            android:padding="12dp"
-            android:layout_marginStart="5dp">
+            android:padding="10dp"
+            android:layout_marginStart="4dp">
 
             <FrameLayout
-                android:layout_width="28dp"
-                android:layout_height="28dp"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_alignParentTop="true"
+                android:layout_alignParentStart="true"
                 android:background="@drawable/bg_widget_icon_circle">
 
                 <ImageView
-                    android:layout_width="16dp"
-                    android:layout_height="16dp"
+                    android:layout_width="14dp"
+                    android:layout_height="14dp"
                     android:layout_gravity="center"
                     android:src="@drawable/ic_widget_minus"
                     android:contentDescription="Nuevo gasto" />
             </FrameLayout>
 
-            <FrameLayout
-                android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1" />
-
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_alignParentBottom="true"
+                android:layout_alignParentStart="true"
+                android:layout_alignParentEnd="true"
                 android:text="Nuevo gasto"
                 android:textColor="#FFFFFF"
-                android:textSize="13sp"
+                android:textSize="12sp"
                 android:textStyle="bold"
-                android:singleLine="true"
+                android:maxLines="1"
                 android:ellipsize="end" />
-        </LinearLayout>
+        </RelativeLayout>
     </LinearLayout>
 
 </LinearLayout>

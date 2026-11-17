@@ -43,6 +43,18 @@ class DebtsTable extends Table {
   IntColumn get dueDay => integer().named('due_day')();
   IntColumn get priority => integer()();
   BoolColumn get archived => boolean().withDefault(const Constant(false))();
+  TextColumn get debtType =>
+      text().named('debt_type').withDefault(const Constant('personal'))();
+  BoolColumn get hasManagementFee => boolean()
+      .named('has_management_fee')
+      .withDefault(const Constant(false))();
+  IntColumn get managementFee =>
+      integer().named('management_fee').withDefault(const Constant(0))();
+  TextColumn get frequencyType =>
+      text().named('frequency_type').withDefault(const Constant('monthly'))();
+  IntColumn get intervalDays => integer().named('interval_days').nullable()();
+  DateTimeColumn get nextDueDate =>
+      dateTime().named('next_due_date').nullable()();
 }
 
 class ReceivablesTable extends Table {

@@ -22,6 +22,12 @@ class DebtRepositoryImpl implements DebtRepository {
       dueDay: row.dueDay,
       priority: row.priority,
       archived: row.archived,
+      debtType: DebtType.fromString(row.debtType),
+      hasManagementFee: row.hasManagementFee,
+      managementFee: row.managementFee,
+      frequencyType: DebtFrequency.fromString(row.frequencyType),
+      intervalDays: row.intervalDays,
+      nextDueDate: row.nextDueDate,
     );
   }
 
@@ -51,6 +57,12 @@ class DebtRepositoryImpl implements DebtRepository {
     required int minPayment,
     required int dueDay,
     int priority = 1,
+    DebtType debtType = DebtType.personal,
+    bool hasManagementFee = false,
+    int managementFee = 0,
+    DebtFrequency frequencyType = DebtFrequency.monthly,
+    int? intervalDays,
+    DateTime? nextDueDate,
   }) async {
     try {
       final id = await _db
@@ -65,6 +77,16 @@ class DebtRepositoryImpl implements DebtRepository {
               dueDay: dueDay,
               priority: priority,
               archived: const Value(false),
+              debtType: Value(debtType.dbValue),
+              hasManagementFee: Value(hasManagementFee),
+              managementFee: Value(managementFee),
+              frequencyType: Value(frequencyType.dbValue),
+              intervalDays: intervalDays != null
+                  ? Value(intervalDays)
+                  : const Value.absent(),
+              nextDueDate: nextDueDate != null
+                  ? Value(nextDueDate)
+                  : const Value.absent(),
             ),
           );
 
@@ -88,6 +110,12 @@ class DebtRepositoryImpl implements DebtRepository {
     int? minPayment,
     int? dueDay,
     int? priority,
+    DebtType? debtType,
+    bool? hasManagementFee,
+    int? managementFee,
+    DebtFrequency? frequencyType,
+    int? intervalDays,
+    DateTime? nextDueDate,
   }) async {
     try {
       final rows =
@@ -111,6 +139,24 @@ class DebtRepositoryImpl implements DebtRepository {
               dueDay: dueDay != null ? Value(dueDay) : const Value.absent(),
               priority: priority != null
                   ? Value(priority)
+                  : const Value.absent(),
+              debtType: debtType != null
+                  ? Value(debtType.dbValue)
+                  : const Value.absent(),
+              hasManagementFee: hasManagementFee != null
+                  ? Value(hasManagementFee)
+                  : const Value.absent(),
+              managementFee: managementFee != null
+                  ? Value(managementFee)
+                  : const Value.absent(),
+              frequencyType: frequencyType != null
+                  ? Value(frequencyType.dbValue)
+                  : const Value.absent(),
+              intervalDays: intervalDays != null
+                  ? Value(intervalDays)
+                  : const Value.absent(),
+              nextDueDate: nextDueDate != null
+                  ? Value(nextDueDate)
                   : const Value.absent(),
             ),
           );
@@ -196,25 +242,13 @@ class DebtRepositoryImpl implements DebtRepository {
   Stream<List<DebtWithBalance>> watchDebtsWithBalance({
     bool includeArchived = false,
   }) {
-    final query = _db.select(_db.debtsTable);
-    if (!includeArchived) {
-      query.where((t) => t.archived.equals(false));
-    }
+    final trigger = _db.customSelect(
+      'SELECT 1',
+      readsFrom: {_db.debtsTable, _db.transactionsTable},
+    );
 
-    return query.watch().asyncMap((debts) async {
-      final list = <DebtWithBalance>[];
-      for (final d in debts) {
-        final paid = await _calculatePaidAmount(d.id);
-        final current = (d.initialAmount - paid).clamp(0, d.initialAmount);
-        list.add(
-          DebtWithBalance(
-            debt: _toEntity(d),
-            paidAmount: paid,
-            currentBalance: current,
-          ),
-        );
-      }
-      return list;
+    return trigger.watch().asyncMap((_) {
+      return getDebtsWithBalance(includeArchived: includeArchived);
     });
   }
 
@@ -286,11 +320,9 @@ class DebtRepositoryImpl implements DebtRepository {
         .where((d) => d.currentBalance > 0)
         .toList();
 
-    final currentDay = referenceDate.day;
-    final maxTargetDay = currentDay + daysAhead;
-
     return active.where((d) {
-      return d.debt.dueDay >= currentDay && d.debt.dueDay <= maxTargetDay;
+      final diff = d.daysUntilDue(referenceDate);
+      return diff >= 0 && diff <= daysAhead;
     }).toList();
   }
 }

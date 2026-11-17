@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
@@ -73,7 +74,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     refreshNotifier.value = next;
   });
 
-  return GoRouter(
+  final router = GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: ref.read(onboardingCompletedProvider)
         ? '/'
@@ -251,4 +252,16 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
     ],
   );
+
+  const widgetChannel = MethodChannel('com.finanzas.app/widgets');
+  widgetChannel.setMethodCallHandler((call) async {
+    if (call.method == 'onWidgetDeepLink') {
+      final link = call.arguments as String?;
+      if (link != null && link.isNotEmpty) {
+        router.go(link);
+      }
+    }
+  });
+
+  return router;
 });

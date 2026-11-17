@@ -11,6 +11,12 @@ abstract class DebtRepository {
     required int minPayment,
     required int dueDay,
     int priority = 1,
+    DebtType debtType = DebtType.personal,
+    bool hasManagementFee = false,
+    int managementFee = 0,
+    DebtFrequency frequencyType = DebtFrequency.monthly,
+    int? intervalDays,
+    DateTime? nextDueDate,
   });
 
   Future<Result<DebtEntity, Failure>> updateDebt({
@@ -22,6 +28,12 @@ abstract class DebtRepository {
     int? minPayment,
     int? dueDay,
     int? priority,
+    DebtType? debtType,
+    bool? hasManagementFee,
+    int? managementFee,
+    DebtFrequency? frequencyType,
+    int? intervalDays,
+    DateTime? nextDueDate,
   });
 
   Future<Result<void, Failure>> archiveDebt({

@@ -8,7 +8,9 @@ import 'package:finanzas_personales/core/widgets/quick_actions_widget.dart';
 import 'package:finanzas_personales/core/widgets/transaction_tile.dart';
 import 'package:finanzas_personales/features/accounts/domain/entities/account.dart';
 import 'package:finanzas_personales/features/accounts/presentation/providers/accounts_providers.dart';
+import 'package:finanzas_personales/features/debts/domain/entities/debt.dart';
 import 'package:finanzas_personales/features/debts/presentation/pages/debts_and_receivables_page.dart';
+import 'package:finanzas_personales/features/debts/presentation/providers/debts_providers.dart';
 import 'package:finanzas_personales/features/onboarding/presentation/pages/onboarding_page.dart';
 import 'package:finanzas_personales/features/quick_add/presentation/pages/quick_add_page.dart';
 import 'package:finanzas_personales/features/reports/presentation/pages/home_dashboard_page.dart';
@@ -570,6 +572,109 @@ void main() {
         await tester.enterText(searchField, 'InexistenteXYZ');
         await tester.pumpAndSettle();
         expect(find.text('Cafe'), findsNothing);
+      },
+    );
+
+    testWidgets(
+      '8. Flexible debts (personal 8-day term & credit card with management fee) and live deficit/surplus updates',
+      (tester) async {
+        tester.view.physicalSize = const Size(1080, 2400);
+        tester.view.devicePixelRatio = 2.0;
+        addTearDown(tester.view.resetPhysicalSize);
+        addTearDown(tester.view.resetDevicePixelRatio);
+
+        final container = createContainer();
+        addTearDown(container.dispose);
+
+        final createAcc = container.read(createAccountUseCaseProvider);
+        await createAcc(
+          name: 'Efectivo',
+          type: AccountType.cash,
+          initialBalance: 80000,
+        );
+
+        final createDebt = container.read(createDebtUseCaseProvider);
+        // Debt 1: Personal debt due in 8 days (60,000, 0% interest)
+        await createDebt(
+          name: 'Prestamo Amigo',
+          creditor: 'Andres',
+          initialAmount: 60000,
+          interestRateBp: 0,
+          minPayment: 60000,
+          dueDay: 8,
+          debtType: DebtType.personal,
+          frequencyType: DebtFrequency.inDays,
+          intervalDays: 8,
+        );
+        // Debt 2: Credit card with management fee (minPayment 40,000 + fee 15,000 = 55,000)
+        await createDebt(
+          name: 'Tarjeta Credito',
+          creditor: 'Banco',
+          initialAmount: 200000,
+          interestRateBp: 220,
+          minPayment: 40000,
+          dueDay: 15,
+          debtType: DebtType.creditCard,
+          hasManagementFee: true,
+          managementFee: 15000,
+          frequencyType: DebtFrequency.biweekly,
+          intervalDays: 15,
+        );
+
+        await tester.pumpWidget(
+          UncontrolledProviderScope(
+            container: container,
+            child: const FinanzasApp(),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        // Total debt obligation = 60,000 + 55,000 = 115,000.
+        // Cash = 80,000 -> Shortfall = 35,000
+        expect(find.text('Te falta conseguir para deudas'), findsOneWidget);
+        expect(find.textContaining('35.000'), findsWidgets);
+
+        // User opens 'Nuevo gasto' even though they are in deficit
+        await tester.tap(find.text('Nuevo gasto'));
+        await tester.pumpAndSettle();
+        expect(find.byType(QuickAddPage), findsOneWidget);
+
+        // Enters 10,000 expense -> warning banner shows projected shortfall of 45,000
+        await tapKeypadDigit(tester, '1');
+        await tapKeypadDigit(tester, '0');
+        await tapKeypadDigit(tester, '0');
+        await tapKeypadDigit(tester, '0');
+        await tapKeypadDigit(tester, '0');
+        expect(find.textContaining('45.000'), findsWidgets);
+
+        await tester.tap(find.text('Guardar'));
+        await tester.pumpAndSettle();
+
+        // Back on HomeDashboardPage, shortfall increased to 45,000
+        expect(find.byType(HomeDashboardPage), findsOneWidget);
+        expect(find.text('Te falta conseguir para deudas'), findsOneWidget);
+        expect(find.textContaining('45.000'), findsWidgets);
+
+        // Wait for snackbar to clear before opening next quick action
+        await tester.pump(const Duration(seconds: 2));
+        await tester.pumpAndSettle();
+
+        // Now user earns 100,000 from daily work + extra income
+        await tester.tap(find.text('Ingresos nuevos'));
+        await tester.pumpAndSettle();
+        await tapKeypadDigit(tester, '1');
+        await tapKeypadDigit(tester, '0');
+        await tapKeypadDigit(tester, '0');
+        await tapKeypadDigit(tester, '0');
+        await tapKeypadDigit(tester, '0');
+        await tapKeypadDigit(tester, '0');
+        await tester.tap(find.text('Guardar'));
+        await tester.pumpAndSettle();
+
+        // Now cash = 70,000 + 100,000 = 170,000.
+        // After 115,000 debt obligations, 55,000 surplus is available and distribution card appears!
+        expect(find.text('Te falta conseguir para deudas'), findsNothing);
+        expect(find.textContaining('55.000'), findsWidgets);
       },
     );
   });

@@ -51,12 +51,16 @@ class SuggestDebtPayment {
       // Sort by strategy (RN-13)
       activeDebts.sort((a, b) {
         if (strategy == DebtStrategy.avalanche) {
-          // Highest interest rate first
+          // Highest interest rate first; if tied, highest management fee; then lowest balance
           final cmp = b.debt.interestRateBp.compareTo(a.debt.interestRateBp);
           if (cmp != 0) return cmp;
+          final feeCmp = b.debt.effectiveManagementFee.compareTo(
+            a.debt.effectiveManagementFee,
+          );
+          if (feeCmp != 0) return feeCmp;
           return a.currentBalance.compareTo(b.currentBalance);
         } else {
-          // Snowball: lowest balance first
+          // Snowball: lowest balance first; if tied, highest interest rate
           final cmp = a.currentBalance.compareTo(b.currentBalance);
           if (cmp != 0) return cmp;
           return b.debt.interestRateBp.compareTo(a.debt.interestRateBp);
@@ -70,9 +74,9 @@ class SuggestDebtPayment {
             ? target.currentBalance
             : availableAmount;
       } else {
-        suggested = target.debt.minPayment > target.currentBalance
+        suggested = target.totalCycleObligation > target.currentBalance
             ? target.currentBalance
-            : target.debt.minPayment;
+            : target.totalCycleObligation;
       }
 
       return Result.ok(

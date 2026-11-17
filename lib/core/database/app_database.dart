@@ -28,13 +28,23 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.forTesting(super.executor);
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
     onCreate: (m) async {
       await m.createAll();
       await _seedInitialData();
+    },
+    onUpgrade: (m, from, to) async {
+      if (from < 2) {
+        await m.addColumn(debtsTable, debtsTable.debtType);
+        await m.addColumn(debtsTable, debtsTable.hasManagementFee);
+        await m.addColumn(debtsTable, debtsTable.managementFee);
+        await m.addColumn(debtsTable, debtsTable.frequencyType);
+        await m.addColumn(debtsTable, debtsTable.intervalDays);
+        await m.addColumn(debtsTable, debtsTable.nextDueDate);
+      }
     },
     beforeOpen: (details) async {
       await customStatement('PRAGMA foreign_keys = ON');

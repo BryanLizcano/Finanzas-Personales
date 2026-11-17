@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/database/database_provider.dart';
+import '../../../accounts/presentation/providers/accounts_providers.dart';
 import '../../../debts/presentation/providers/debts_providers.dart';
 import '../../data/repositories/budget_repository_impl.dart';
 import '../../domain/entities/allocation_rule.dart';
@@ -34,6 +35,7 @@ final computeSafeAvailableUseCaseProvider = Provider<ComputeSafeAvailable>((
   return ComputeSafeAvailable(
     budgetRepository: ref.watch(budgetRepositoryProvider),
     debtRepository: ref.watch(debtRepositoryProvider),
+    accountRepository: ref.watch(accountRepositoryProvider),
   );
 });
 
@@ -50,6 +52,12 @@ final allocationRulesStreamProvider = StreamProvider<List<AllocationRule>>((
 });
 
 final safeAvailableProvider = FutureProvider<SafeAvailableResult>((ref) async {
+  // Watch accounts, debts, and baseIncome so this provider automatically recomputes
+  // whenever any transaction, account balance, debt payment, or base income changes.
+  ref.watch(accountsWithBalanceProvider);
+  ref.watch(debtsWithBalanceStreamProvider);
+  ref.watch(baseIncomeStreamProvider);
+
   final useCase = ref.watch(computeSafeAvailableUseCaseProvider);
   final res = await useCase();
   return res.valueOrNull ??

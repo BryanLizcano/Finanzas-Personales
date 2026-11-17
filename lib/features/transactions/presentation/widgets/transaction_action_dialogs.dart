@@ -111,7 +111,7 @@ Future<void> _refreshAndSyncProviders(WidgetRef ref) async {
       year: now.year,
       month: now.month,
     );
-    final safeAvail = safeRes.valueOrNull?.safeAvailable ?? 0;
+    final safeAvail = safeRes.valueOrNull?.effectiveAvailable ?? 0;
     final monthlyBal = summaryRes.valueOrNull?.balance ?? 0;
     await ref.read(updateWidgetDataUseCaseProvider)(
       safeAvailable: safeAvail,

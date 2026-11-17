@@ -83,6 +83,10 @@ class SafeAvailableResult {
   final int savingsContribution;
   final int safeAvailable;
   final bool isDeficit;
+  final int liquidBalance;
+  final int totalManagementFees;
+  final int netBalanceAfterDebts;
+  final bool hasAccounts;
 
   const SafeAvailableResult({
     required this.baseIncome,
@@ -91,7 +95,33 @@ class SafeAvailableResult {
     required this.savingsContribution,
     required this.safeAvailable,
     required this.isDeficit,
+    this.liquidBalance = 0,
+    this.totalManagementFees = 0,
+    this.netBalanceAfterDebts = 0,
+    this.hasAccounts = false,
   });
+
+  /// Real-time shortfall: how much more money the user needs to earn to cover pending debt obligations.
+  int get shortfallForDebts {
+    if (hasAccounts) {
+      return netBalanceAfterDebts < 0 ? -netBalanceAfterDebts : 0;
+    }
+    return safeAvailable < 0 ? -safeAvailable : 0;
+  }
+
+  /// Real-time surplus: how much money is left free after setting aside all pending debt payments.
+  int get surplusAfterDebts {
+    if (hasAccounts) {
+      return netBalanceAfterDebts > 0 ? netBalanceAfterDebts : 0;
+    }
+    return safeAvailable > 0 ? safeAvailable : 0;
+  }
+
+  /// Effective available amount to display in real-time (reacts to expenses, daily earnings, and debt payments).
+  int get effectiveAvailable =>
+      hasAccounts ? netBalanceAfterDebts : safeAvailable;
+
+  bool get isEffectiveDeficit => effectiveAvailable < 0;
 
   @override
   bool operator ==(Object other) =>
@@ -103,7 +133,11 @@ class SafeAvailableResult {
           debtMinPayments == other.debtMinPayments &&
           savingsContribution == other.savingsContribution &&
           safeAvailable == other.safeAvailable &&
-          isDeficit == other.isDeficit;
+          isDeficit == other.isDeficit &&
+          liquidBalance == other.liquidBalance &&
+          totalManagementFees == other.totalManagementFees &&
+          netBalanceAfterDebts == other.netBalanceAfterDebts &&
+          hasAccounts == other.hasAccounts;
 
   @override
   int get hashCode => Object.hash(
@@ -113,5 +147,9 @@ class SafeAvailableResult {
     savingsContribution,
     safeAvailable,
     isDeficit,
+    liquidBalance,
+    totalManagementFees,
+    netBalanceAfterDebts,
+    hasAccounts,
   );
 }

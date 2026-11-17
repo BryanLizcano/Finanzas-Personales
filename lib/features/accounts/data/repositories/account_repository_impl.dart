@@ -127,12 +127,17 @@ class AccountRepositoryImpl implements AccountRepository {
   Stream<List<AccountWithBalance>> watchAccountsWithBalance({
     bool includeArchived = false,
   }) {
-    final accountsQuery = _db.select(_db.accountsTable);
-    if (!includeArchived) {
-      accountsQuery.where((t) => t.archived.equals(false));
-    }
+    final trigger = _db.customSelect(
+      'SELECT 1',
+      readsFrom: {_db.accountsTable, _db.transactionsTable},
+    );
 
-    return accountsQuery.watch().asyncMap((accounts) async {
+    return trigger.watch().asyncMap((_) async {
+      final accountsQuery = _db.select(_db.accountsTable);
+      if (!includeArchived) {
+        accountsQuery.where((t) => t.archived.equals(false));
+      }
+      final accounts = await accountsQuery.get();
       final list = <AccountWithBalance>[];
       for (final a in accounts) {
         final balResult = await getAccountBalance(a.id);

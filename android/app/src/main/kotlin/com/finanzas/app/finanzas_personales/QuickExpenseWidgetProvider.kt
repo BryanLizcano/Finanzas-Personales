@@ -45,9 +45,9 @@ class QuickExpenseWidgetProvider : AppWidgetProvider() {
         requestCode: Int
     ): PendingIntent {
         val uriString = if (cat.isNotEmpty()) {
-            "finanzas://quick-add?kind=$kind&cat=$cat"
+            "finanzas://quick-add/quick-add?kind=$kind&cat=$cat"
         } else {
-            "finanzas://quick-add?kind=$kind"
+            "finanzas://quick-add/quick-add?kind=$kind"
         }
         val uri = Uri.parse(uriString)
         val intent = Intent(Intent.ACTION_VIEW, uri, context, MainActivity::class.java).apply {

@@ -7,6 +7,7 @@ import 'package:intl/intl.dart';
 import '../../../../app/theme/finance_colors.dart';
 import '../../../../core/errors/failure_message.dart';
 import '../../../../core/money/currency.dart';
+import '../../../../core/money/money.dart';
 import '../../../../core/widgets/amount_input_field.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../core/widgets/category_chip.dart';
@@ -139,7 +140,7 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
         month: now.month,
       );
 
-      final safeAvail = safeRes.valueOrNull?.safeAvailable ?? 0;
+      final safeAvail = safeRes.valueOrNull?.effectiveAvailable ?? 0;
       final monthlyBal = summaryRes.valueOrNull?.balance ?? 0;
 
       final updateWidgetData = ref.read(updateWidgetDataUseCaseProvider);
@@ -373,6 +374,63 @@ class _AddTransactionPageState extends ConsumerState<AddTransactionPage> {
                     : _kind == TransactionKind.expense
                     ? colors.expense
                     : colors.primary,
+              ),
+              Builder(
+                builder: (context) {
+                  final safeVal = ref
+                      .watch(safeAvailableProvider)
+                      .asData
+                      ?.value;
+                  final typedUnits = _computeUnits(currency);
+                  if (_kind != TransactionKind.expense ||
+                      safeVal == null ||
+                      safeVal.debtMinPayments <= 0) {
+                    return const SizedBox.shrink();
+                  }
+                  final projectedNet = safeVal.effectiveAvailable - typedUnits;
+                  if (projectedNet >= 0) {
+                    return const SizedBox.shrink();
+                  }
+                  final missingMoney = Money(
+                    units: -projectedNet,
+                    currency: currency,
+                  );
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 6,
+                      ),
+                      decoration: BoxDecoration(
+                        color: colors.expense.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.warning_amber_rounded,
+                            size: 15,
+                            color: colors.expense,
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              typedUnits > 0
+                                  ? 'Con este gasto te faltarán ${missingMoney.format()} para tus deudas'
+                                  : 'Te faltan ${missingMoney.format()} para cubrir tus deudas',
+                              style: TextStyle(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: colors.expense,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                },
               ),
 
               // Accounts selector highlighting Efectivo vs Cuenta
