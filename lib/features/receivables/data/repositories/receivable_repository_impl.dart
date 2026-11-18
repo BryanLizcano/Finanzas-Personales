@@ -141,27 +141,16 @@ class ReceivableRepositoryImpl implements ReceivableRepository {
   @override
   Stream<List<ReceivableWithBalance>> watchReceivablesWithBalance({
     bool includeArchived = false,
-  }) {
-    final query = _db.select(_db.receivablesTable);
-    if (!includeArchived) {
-      query.where((t) => t.archived.equals(false));
+  }) async* {
+    yield await getReceivablesWithBalance(includeArchived: includeArchived);
+    await for (final _ in _db.tableUpdates(
+      TableUpdateQuery.onAllTables([
+        _db.receivablesTable,
+        _db.transactionsTable,
+      ]),
+    )) {
+      yield await getReceivablesWithBalance(includeArchived: includeArchived);
     }
-
-    return query.watch().asyncMap((rows) async {
-      final list = <ReceivableWithBalance>[];
-      for (final r in rows) {
-        final collected = await _calculateCollectedAmount(r.id);
-        final pending = (r.initialAmount - collected).clamp(0, r.initialAmount);
-        list.add(
-          ReceivableWithBalance(
-            receivable: _toEntity(r),
-            collectedAmount: collected,
-            pendingBalance: pending,
-          ),
-        );
-      }
-      return list;
-    });
   }
 
   @override

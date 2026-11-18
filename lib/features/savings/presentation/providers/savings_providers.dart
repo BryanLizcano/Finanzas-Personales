@@ -33,6 +33,7 @@ final savingsGoalsWithProgressStreamProvider =
     });
 
 final totalSavedAmountProvider = FutureProvider<int>((ref) async {
+  ref.watch(savingsGoalsWithProgressStreamProvider);
   final repo = ref.watch(savingsRepositoryProvider);
   return repo.getTotalSavedAmount();
 });

@@ -1,10 +1,14 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/database/database_provider.dart';
+import '../../../accounts/presentation/providers/accounts_providers.dart';
 import '../../../budget/presentation/providers/budget_providers.dart';
+import '../../../categories/presentation/providers/categories_providers.dart';
 import '../../../debts/presentation/providers/debts_providers.dart';
 import '../../../receivables/presentation/providers/receivables_providers.dart';
 import '../../../savings/presentation/providers/savings_providers.dart';
+import '../../../transactions/domain/entities/transaction.dart';
+import '../../../transactions/presentation/providers/transactions_providers.dart';
 import '../../data/repositories/reports_repository_impl.dart';
 import '../../domain/entities/report_models.dart';
 import '../../domain/repositories/reports_repository.dart';
@@ -37,11 +41,22 @@ final getMonthlyTotalsUseCaseProvider = Provider<GetMonthlyTotals>((ref) {
   return GetMonthlyTotals(ref.watch(reportsRepositoryProvider));
 });
 
+void _watchAllReactiveStreams(Ref ref) {
+  ref.watch(accountsWithBalanceProvider);
+  ref.watch(debtsWithBalanceStreamProvider);
+  ref.watch(receivablesWithBalanceStreamProvider);
+  ref.watch(savingsGoalsWithProgressStreamProvider);
+  ref.watch(baseIncomeStreamProvider);
+  ref.watch(allCategoriesProvider);
+  ref.watch(transactionsStreamProvider(const TransactionFilter()));
+}
+
 final monthlySummaryProvider =
     FutureProvider.family<MonthlySummary, ({int year, int month})>((
       ref,
       params,
     ) async {
+      _watchAllReactiveStreams(ref);
       final useCase = ref.watch(getMonthlySummaryUseCaseProvider);
       final res = await useCase(year: params.year, month: params.month);
       return res.valueOrNull ??
@@ -62,6 +77,7 @@ final monthlySummaryProvider =
 final categoryBreakdownProvider =
     FutureProvider.family<List<CategoryBreakdownItem>, ({int year, int month})>(
       (ref, params) async {
+        _watchAllReactiveStreams(ref);
         final useCase = ref.watch(getCategoryBreakdownUseCaseProvider);
         final res = await useCase(year: params.year, month: params.month);
         return res.valueOrNull ?? const [];
@@ -71,6 +87,7 @@ final categoryBreakdownProvider =
 final monthlyTotalsProvider = FutureProvider<List<MonthlyTotalItem>>((
   ref,
 ) async {
+  _watchAllReactiveStreams(ref);
   final useCase = ref.watch(getMonthlyTotalsUseCaseProvider);
   final res = await useCase();
   return res.valueOrNull ?? const [];
@@ -82,6 +99,7 @@ final motoReportProvider =
       ref,
       params,
     ) async {
+      _watchAllReactiveStreams(ref);
       final repo = ref.watch(reportsRepositoryProvider);
       final res = await repo.getGroupedExpenses(
         year: params.year,
@@ -103,6 +121,7 @@ final coupleReportProvider =
       ref,
       params,
     ) async {
+      _watchAllReactiveStreams(ref);
       final repo = ref.watch(reportsRepositoryProvider);
       final res = await repo.getGroupedExpenses(
         year: params.year,

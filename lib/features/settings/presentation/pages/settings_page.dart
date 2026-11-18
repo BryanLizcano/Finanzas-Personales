@@ -215,7 +215,7 @@ class SettingsPage extends ConsumerWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '${l10n.settingsVersion}: 1.3.0 (Offline-First)',
+                    '${l10n.settingsVersion}: 1.3.1 (Offline-First)',
                     style: TextStyle(
                       color: colors.onSurfaceMuted,
                       fontSize: 13,
@@ -411,6 +411,8 @@ class SettingsPage extends ConsumerWidget {
               final units = Money.fromMajor(valMajor, currency).units;
               final setBaseIncome = ref.read(setBaseIncomeUseCaseProvider);
               await setBaseIncome(units);
+              ref.invalidate(baseIncomeStreamProvider);
+              ref.invalidate(safeAvailableProvider);
               if (ctx.mounted) Navigator.of(ctx).pop();
             },
             child: Text(l10n.save),
@@ -483,7 +485,11 @@ class SettingsPage extends ConsumerWidget {
               );
 
               res.fold(
-                onOk: (_) => Navigator.of(ctx).pop(),
+                onOk: (_) {
+                  ref.invalidate(allocationRulesStreamProvider);
+                  ref.invalidate(safeAvailableProvider);
+                  Navigator.of(ctx).pop();
+                },
                 onError: (failure) => ScaffoldMessenger.of(context)
                     .showSnackBar(
                       SnackBar(content: Text(failure.toLocalizedMessage(l10n))),

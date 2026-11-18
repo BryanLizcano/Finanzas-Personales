@@ -178,29 +178,16 @@ class SavingsRepositoryImpl implements SavingsRepository {
   @override
   Stream<List<SavingsGoalWithProgress>> watchGoalsWithProgress({
     bool includeArchived = false,
-  }) {
-    final query = _db.select(_db.savingsGoalsTable);
-    if (!includeArchived) {
-      query.where((t) => t.archived.equals(false));
+  }) async* {
+    yield await getGoalsWithProgress(includeArchived: includeArchived);
+    await for (final _ in _db.tableUpdates(
+      TableUpdateQuery.onAllTables([
+        _db.savingsGoalsTable,
+        _db.transactionsTable,
+      ]),
+    )) {
+      yield await getGoalsWithProgress(includeArchived: includeArchived);
     }
-
-    return query.watch().asyncMap((rows) async {
-      final list = <SavingsGoalWithProgress>[];
-      for (final r in rows) {
-        final current = await _calculateGoalProgress(r.id);
-        final ratio = r.targetAmount == 0
-            ? 1.0
-            : (current / r.targetAmount).clamp(0.0, 1.0);
-        list.add(
-          SavingsGoalWithProgress(
-            goal: _toEntity(r),
-            currentAmount: current,
-            progressRatio: ratio,
-          ),
-        );
-      }
-      return list;
-    });
   }
 
   @override

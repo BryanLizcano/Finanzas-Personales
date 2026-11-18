@@ -123,42 +123,46 @@ class AccountRepositoryImpl implements AccountRepository {
     }
   }
 
+  Future<List<AccountWithBalance>> _fetchAccountsWithBalance({
+    bool includeArchived = false,
+  }) async {
+    final accountsQuery = _db.select(_db.accountsTable);
+    if (!includeArchived) {
+      accountsQuery.where((t) => t.archived.equals(false));
+    }
+    final accounts = await accountsQuery.get();
+    final list = <AccountWithBalance>[];
+    for (final a in accounts) {
+      final balResult = await getAccountBalance(a.id);
+      final balance = balResult.isOk
+          ? balResult.valueOrNull!
+          : Money(units: a.initialBalance, currency: _currency);
+      list.add(
+        AccountWithBalance(
+          account: Account(
+            id: a.id,
+            name: a.name,
+            type: AccountType.fromString(a.type),
+            initialBalance: a.initialBalance,
+            archived: a.archived,
+          ),
+          balance: balance,
+        ),
+      );
+    }
+    return list;
+  }
+
   @override
   Stream<List<AccountWithBalance>> watchAccountsWithBalance({
     bool includeArchived = false,
-  }) {
-    final trigger = _db.customSelect(
-      'SELECT 1',
-      readsFrom: {_db.accountsTable, _db.transactionsTable},
-    );
-
-    return trigger.watch().asyncMap((_) async {
-      final accountsQuery = _db.select(_db.accountsTable);
-      if (!includeArchived) {
-        accountsQuery.where((t) => t.archived.equals(false));
-      }
-      final accounts = await accountsQuery.get();
-      final list = <AccountWithBalance>[];
-      for (final a in accounts) {
-        final balResult = await getAccountBalance(a.id);
-        final balance = balResult.isOk
-            ? balResult.valueOrNull!
-            : Money(units: a.initialBalance, currency: _currency);
-        list.add(
-          AccountWithBalance(
-            account: Account(
-              id: a.id,
-              name: a.name,
-              type: AccountType.fromString(a.type),
-              initialBalance: a.initialBalance,
-              archived: a.archived,
-            ),
-            balance: balance,
-          ),
-        );
-      }
-      return list;
-    });
+  }) async* {
+    yield await _fetchAccountsWithBalance(includeArchived: includeArchived);
+    await for (final _ in _db.tableUpdates(
+      TableUpdateQuery.onAllTables([_db.accountsTable, _db.transactionsTable]),
+    )) {
+      yield await _fetchAccountsWithBalance(includeArchived: includeArchived);
+    }
   }
 
   @override

@@ -233,7 +233,12 @@ class _CategoriesPageState extends ConsumerState<CategoriesPage>
                 );
 
                 res.fold(
-                  onOk: (_) => Navigator.of(ctx).pop(),
+                  onOk: (_) {
+                    ref.invalidate(allCategoriesProvider);
+                    ref.invalidate(activeExpenseCategoriesProvider);
+                    ref.invalidate(activeIncomeCategoriesProvider);
+                    Navigator.of(ctx).pop();
+                  },
                   onError: (f) => ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text(f.toLocalizedMessage(l10n))),
                   ),
@@ -310,6 +315,9 @@ class _CategoryListView extends ConsumerWidget {
               onChanged: (val) async {
                 final setActive = ref.read(setCategoryActiveUseCaseProvider);
                 await setActive(id: cat.id, isActive: val);
+                ref.invalidate(allCategoriesProvider);
+                ref.invalidate(activeExpenseCategoriesProvider);
+                ref.invalidate(activeIncomeCategoriesProvider);
               },
             ),
           ),

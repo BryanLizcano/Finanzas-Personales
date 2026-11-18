@@ -212,7 +212,10 @@ class AccountsPage extends ConsumerWidget {
                 );
 
                 res.fold(
-                  onOk: (_) => Navigator.of(ctx).pop(),
+                  onOk: (_) {
+                    ref.invalidate(accountsWithBalanceProvider);
+                    Navigator.of(ctx).pop();
+                  },
                   onError: (f) => ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text(f.toLocalizedMessage(l10n))),
                   ),
@@ -288,7 +291,10 @@ class AccountsPage extends ConsumerWidget {
                 );
 
                 res.fold(
-                  onOk: (_) => Navigator.of(ctx).pop(),
+                  onOk: (_) {
+                    ref.invalidate(accountsWithBalanceProvider);
+                    Navigator.of(ctx).pop();
+                  },
                   onError: (f) => ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text(f.toLocalizedMessage(l10n))),
                   ),
@@ -323,6 +329,7 @@ class AccountsPage extends ConsumerWidget {
             onPressed: () async {
               final archiveUseCase = ref.read(archiveAccountUseCaseProvider);
               await archiveUseCase(id: acc.id, archived: true);
+              ref.invalidate(accountsWithBalanceProvider);
               if (ctx.mounted) Navigator.of(ctx).pop();
             },
             child: Text(l10n.confirm),

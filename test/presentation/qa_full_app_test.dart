@@ -675,6 +675,33 @@ void main() {
         // After 115,000 debt obligations, 55,000 surplus is available and distribution card appears!
         expect(find.text('Te falta conseguir para deudas'), findsNothing);
         expect(find.textContaining('55.000'), findsWidgets);
+
+        await tester.pump(const Duration(seconds: 2));
+        await tester.pumpAndSettle();
+
+        // Navigate to Deudas tab and add a new debt via the UI dialog; verify immediate screen update
+        await tester.tap(find.byType(NavigationDestination).at(2));
+        await tester.pumpAndSettle();
+        expect(find.byType(DebtsAndReceivablesPage), findsOneWidget);
+        expect(find.text('Prestamo Amigo'), findsWidgets);
+
+        await tester.tap(find.byType(FloatingActionButton).first);
+        await tester.pumpAndSettle();
+
+        final dialogFields = find.descendant(
+          of: find.byType(AlertDialog),
+          matching: find.byType(TextField),
+        );
+        await tester.enterText(dialogFields.at(0), 'Deuda Tienda');
+        await tester.enterText(dialogFields.at(1), 'Don Jose');
+        await tester.enterText(dialogFields.at(2), '30000');
+        await tester.enterText(dialogFields.at(3), '30000');
+        await tester.tap(find.text('Guardar'));
+        await tester.pumpAndSettle();
+
+        // New debt appears immediately on screen without restarting the app
+        expect(find.text('Deuda Tienda'), findsOneWidget);
+        expect(find.textContaining('Don Jose'), findsOneWidget);
       },
     );
   });

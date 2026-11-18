@@ -10,8 +10,10 @@ import '../../../../core/widgets/error_state_widget.dart';
 import '../../../../core/widgets/skeleton_loading.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../../accounts/presentation/providers/accounts_providers.dart';
+import '../../../budget/presentation/providers/budget_providers.dart';
 import '../../../receivables/domain/entities/receivable.dart';
 import '../../../receivables/presentation/providers/receivables_providers.dart';
+import '../../../reports/presentation/providers/reports_providers.dart';
 import '../../../settings/presentation/providers/settings_providers.dart';
 import '../../domain/entities/debt.dart';
 import '../providers/debts_providers.dart';
@@ -129,13 +131,15 @@ class _DebtsView extends ConsumerWidget {
                                 size: 20,
                               ),
                               const SizedBox(width: 8),
-                              Text(
-                                l10n.debtSuggestionTitle,
-                                style: Theme.of(context).textTheme.bodyLarge
-                                    ?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                      color: colors.debt,
-                                    ),
+                              Expanded(
+                                child: Text(
+                                  l10n.debtSuggestionTitle,
+                                  style: Theme.of(context).textTheme.bodyLarge
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: colors.debt,
+                                      ),
+                                ),
                               ),
                             ],
                           ),
@@ -272,14 +276,17 @@ class _DebtsView extends ConsumerWidget {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                '${l10n.debtCurrentBalance}: ${currentMoney.format()}',
-                                style: Theme.of(context).textTheme.bodyLarge
-                                    ?.copyWith(
-                                      color: colors.debt,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                              Flexible(
+                                child: Text(
+                                  '${l10n.debtCurrentBalance}: ${currentMoney.format()}',
+                                  style: Theme.of(context).textTheme.bodyLarge
+                                      ?.copyWith(
+                                        color: colors.debt,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                ),
                               ),
+                              const SizedBox(width: 8),
                               Text(
                                 'de ${initialMoney.format()}',
                                 style: Theme.of(context).textTheme.labelSmall
@@ -294,18 +301,17 @@ class _DebtsView extends ConsumerWidget {
                             height: 6,
                           ),
                           const SizedBox(height: 8),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 4,
+                            alignment: WrapAlignment.spaceBetween,
                             children: [
-                              Flexible(
-                                child: Text(
-                                  debt.effectiveManagementFee > 0
-                                      ? '${l10n.debtMinPayment}: ${minPayMoney.format()} + Manejo: ${feeMoney.format()}'
-                                      : '${l10n.debtMinPayment}: ${minPayMoney.format()}',
-                                  style: Theme.of(context).textTheme.labelSmall,
-                                ),
+                              Text(
+                                debt.effectiveManagementFee > 0
+                                    ? '${l10n.debtMinPayment}: ${minPayMoney.format()} + Manejo: ${feeMoney.format()}'
+                                    : '${l10n.debtMinPayment}: ${minPayMoney.format()}',
+                                style: Theme.of(context).textTheme.labelSmall,
                               ),
-                              const SizedBox(width: 8),
                               Text(
                                 '$interestText • $termText',
                                 style: Theme.of(context).textTheme.labelSmall
@@ -676,7 +682,13 @@ class _DebtsView extends ConsumerWidget {
                     );
 
                     res.fold(
-                      onOk: (_) => Navigator.of(ctx).pop(),
+                      onOk: (_) {
+                        ref.invalidate(debtsWithBalanceStreamProvider);
+                        ref.invalidate(suggestedDebtPaymentProvider);
+                        ref.invalidate(safeAvailableProvider);
+                        ref.invalidate(monthlySummaryProvider);
+                        Navigator.of(ctx).pop();
+                      },
                       onError: (f) => ScaffoldMessenger.of(context)
                           .showSnackBar(
                             SnackBar(content: Text(f.toLocalizedMessage(l10n))),
@@ -711,7 +723,13 @@ class _DebtsView extends ConsumerWidget {
                     );
 
                     res.fold(
-                      onOk: (_) => Navigator.of(ctx).pop(),
+                      onOk: (_) {
+                        ref.invalidate(debtsWithBalanceStreamProvider);
+                        ref.invalidate(suggestedDebtPaymentProvider);
+                        ref.invalidate(safeAvailableProvider);
+                        ref.invalidate(monthlySummaryProvider);
+                        Navigator.of(ctx).pop();
+                      },
                       onError: (f) => ScaffoldMessenger.of(context)
                           .showSnackBar(
                             SnackBar(content: Text(f.toLocalizedMessage(l10n))),
@@ -805,6 +823,11 @@ class _DebtsView extends ConsumerWidget {
 
                 res.fold(
                   onOk: (_) {
+                    ref.invalidate(debtsWithBalanceStreamProvider);
+                    ref.invalidate(suggestedDebtPaymentProvider);
+                    ref.invalidate(accountsWithBalanceProvider);
+                    ref.invalidate(safeAvailableProvider);
+                    ref.invalidate(monthlySummaryProvider);
                     Navigator.of(ctx).pop();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(l10n.transactionSaved)),
@@ -1051,7 +1074,12 @@ class _ReceivablesView extends ConsumerWidget {
               );
 
               res.fold(
-                onOk: (_) => Navigator.of(ctx).pop(),
+                onOk: (_) {
+                  ref.invalidate(receivablesWithBalanceStreamProvider);
+                  ref.invalidate(totalPendingReceivableProvider);
+                  ref.invalidate(monthlySummaryProvider);
+                  Navigator.of(ctx).pop();
+                },
                 onError: (f) => ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(content: Text(f.toLocalizedMessage(l10n))),
                 ),
@@ -1141,6 +1169,11 @@ class _ReceivablesView extends ConsumerWidget {
 
                 res.fold(
                   onOk: (_) {
+                    ref.invalidate(receivablesWithBalanceStreamProvider);
+                    ref.invalidate(totalPendingReceivableProvider);
+                    ref.invalidate(accountsWithBalanceProvider);
+                    ref.invalidate(safeAvailableProvider);
+                    ref.invalidate(monthlySummaryProvider);
                     Navigator.of(ctx).pop();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(l10n.transactionSaved)),

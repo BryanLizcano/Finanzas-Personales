@@ -272,7 +272,11 @@ class SavingsPage extends ConsumerWidget {
                 );
 
                 res.fold(
-                  onOk: (_) => Navigator.of(ctx).pop(),
+                  onOk: (_) {
+                    ref.invalidate(savingsGoalsWithProgressStreamProvider);
+                    ref.invalidate(totalSavedAmountProvider);
+                    Navigator.of(ctx).pop();
+                  },
                   onError: (f) => ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text(f.toLocalizedMessage(l10n))),
                   ),
@@ -412,6 +416,9 @@ class SavingsPage extends ConsumerWidget {
 
                 res.fold(
                   onOk: (_) {
+                    ref.invalidate(savingsGoalsWithProgressStreamProvider);
+                    ref.invalidate(totalSavedAmountProvider);
+                    ref.invalidate(accountsWithBalanceProvider);
                     Navigator.of(ctx).pop();
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(content: Text(l10n.transactionSaved)),

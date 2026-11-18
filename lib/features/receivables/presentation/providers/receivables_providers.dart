@@ -33,6 +33,7 @@ final receivablesWithBalanceStreamProvider =
     });
 
 final totalPendingReceivableProvider = FutureProvider<int>((ref) async {
+  ref.watch(receivablesWithBalanceStreamProvider);
   final repo = ref.watch(receivableRepositoryProvider);
   return repo.getTotalPendingReceivable();
 });

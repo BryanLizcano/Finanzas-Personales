@@ -8,6 +8,14 @@ import '../../../../app/theme/finance_colors.dart';
 import '../../../../core/errors/failure_message.dart';
 import '../../../../core/widgets/app_button.dart';
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../../accounts/presentation/providers/accounts_providers.dart';
+import '../../../budget/presentation/providers/budget_providers.dart';
+import '../../../categories/presentation/providers/categories_providers.dart';
+import '../../../debts/presentation/providers/debts_providers.dart';
+import '../../../receivables/presentation/providers/receivables_providers.dart';
+import '../../../reports/presentation/providers/reports_providers.dart';
+import '../../../savings/presentation/providers/savings_providers.dart';
+import '../../../transactions/presentation/providers/transactions_providers.dart';
 import '../../domain/entities/backup_manifest.dart';
 import '../providers/backup_providers.dart';
 
@@ -145,6 +153,21 @@ class _BackupPageState extends ConsumerState<BackupPage> {
 
               restoreRes.fold(
                 onOk: (_) {
+                  ref.invalidate(accountsWithBalanceProvider);
+                  ref.invalidate(debtsWithBalanceStreamProvider);
+                  ref.invalidate(suggestedDebtPaymentProvider);
+                  ref.invalidate(receivablesWithBalanceStreamProvider);
+                  ref.invalidate(totalPendingReceivableProvider);
+                  ref.invalidate(savingsGoalsWithProgressStreamProvider);
+                  ref.invalidate(totalSavedAmountProvider);
+                  ref.invalidate(allCategoriesProvider);
+                  ref.invalidate(activeExpenseCategoriesProvider);
+                  ref.invalidate(activeIncomeCategoriesProvider);
+                  ref.invalidate(baseIncomeStreamProvider);
+                  ref.invalidate(allocationRulesStreamProvider);
+                  ref.invalidate(safeAvailableProvider);
+                  ref.invalidate(monthlySummaryProvider);
+                  ref.invalidate(transactionsStreamProvider);
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(content: Text(l10n.backupRestoreSuccess)),
                   );

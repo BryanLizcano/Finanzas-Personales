@@ -241,15 +241,13 @@ class DebtRepositoryImpl implements DebtRepository {
   @override
   Stream<List<DebtWithBalance>> watchDebtsWithBalance({
     bool includeArchived = false,
-  }) {
-    final trigger = _db.customSelect(
-      'SELECT 1',
-      readsFrom: {_db.debtsTable, _db.transactionsTable},
-    );
-
-    return trigger.watch().asyncMap((_) {
-      return getDebtsWithBalance(includeArchived: includeArchived);
-    });
+  }) async* {
+    yield await getDebtsWithBalance(includeArchived: includeArchived);
+    await for (final _ in _db.tableUpdates(
+      TableUpdateQuery.onAllTables([_db.debtsTable, _db.transactionsTable]),
+    )) {
+      yield await getDebtsWithBalance(includeArchived: includeArchived);
+    }
   }
 
   @override
