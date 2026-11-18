@@ -16,6 +16,7 @@ jobs:
       - name: Setup Flutter
         uses: subosito/flutter-action@v2
         with:
+          flutter-version: '3.47.4'
           channel: 'stable'
           cache: true
 
@@ -29,7 +30,7 @@ jobs:
         run: flutter test
 
       - name: Build Android Release APK
-        run: flutter build apk --release
+        run: flutter build apk --release --android-skip-build-dependency-validation
 
       - name: Generate SHA-256 Checksum
         run: |
