@@ -66,6 +66,20 @@ class MainActivity : FlutterActivity() {
                     }
 
                     try {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O &&
+                            !packageManager.canRequestPackageInstalls()
+                        ) {
+                            val permIntent = Intent(
+                                android.provider.Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES,
+                                Uri.parse("package:${applicationContext.packageName}")
+                            ).apply {
+                                addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                            }
+                            startActivity(permIntent)
+                            result.success(true)
+                            return@setMethodCallHandler
+                        }
+
                         val apkUri: Uri = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
                             FileProvider.getUriForFile(
                                 applicationContext,

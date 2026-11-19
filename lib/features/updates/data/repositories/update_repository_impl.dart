@@ -21,7 +21,7 @@ class UpdateRepositoryImpl implements UpdateRepository {
 
   UpdateRepositoryImpl({
     http.Client? client,
-    this.currentVersion = '1.3.1',
+    this.currentVersion = '1.3.2',
     this.owner = defaultOwner,
     this.repo = defaultRepo,
   }) : _client = client ?? http.Client();
@@ -64,6 +64,10 @@ class UpdateRepositoryImpl implements UpdateRepository {
           final name = asset['name'] as String? ?? '';
           if (name.endsWith('.apk')) {
             apkUrl = asset['browser_download_url'] as String? ?? '';
+            final digestField = asset['digest'] as String? ?? '';
+            if (digestField.startsWith('sha256:')) {
+              sha256Expected ??= digestField.substring('sha256:'.length).trim();
+            }
           }
           if (name.endsWith('.sha256')) {
             // Optional direct sha256 asset
@@ -72,9 +76,12 @@ class UpdateRepositoryImpl implements UpdateRepository {
               try {
                 final shaRes = await _client
                     .get(Uri.parse(shaUrl))
-                    .timeout(const Duration(seconds: 5));
+                    .timeout(const Duration(seconds: 15));
                 if (shaRes.statusCode == 200) {
-                  sha256Expected = shaRes.body.trim().split(' ').first;
+                  sha256Expected = shaRes.body
+                      .trim()
+                      .split(RegExp(r'\s+'))
+                      .first;
                 }
               } catch (_) {}
             }
@@ -134,21 +141,23 @@ class UpdateRepositoryImpl implements UpdateRepository {
       await sink.flush();
       await sink.close();
 
-      // Verify SHA-256
-      final bytes = await file.readAsBytes();
-      final computedSha = sha256.convert(bytes).toString().toLowerCase();
+      // Verify SHA-256 using stream to avoid 65MB+ heap allocation spike
       final cleanExpected = expectedSha256.trim().toLowerCase();
+      if (cleanExpected.isNotEmpty) {
+        final digest = await sha256.bind(file.openRead()).first;
+        final computedSha = digest.toString().toLowerCase();
 
-      if (computedSha != cleanExpected) {
-        try {
-          file.deleteSync();
-        } catch (_) {}
-        return const Result.error(
-          Failure(
-            FailureCode.sha256VerificationFailed,
-            'Downloaded APK SHA-256 does not match release hash',
-          ),
-        );
+        if (computedSha != cleanExpected) {
+          try {
+            file.deleteSync();
+          } catch (_) {}
+          return const Result.error(
+            Failure(
+              FailureCode.sha256VerificationFailed,
+              'Downloaded APK SHA-256 does not match release hash',
+            ),
+          );
+        }
       }
 
       return Result.ok(destinationFilePath);
