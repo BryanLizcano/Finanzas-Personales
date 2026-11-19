@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -30,12 +31,38 @@ class _BackupPageState extends ConsumerState<BackupPage> {
   bool _isCreating = false;
   bool _isRestoring = false;
   String? _lastCreatedPath;
+  String? _lastCreatedJson;
+  List<File> _savedBackups = const [];
   final _restoreJsonController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSavedBackups();
+  }
 
   @override
   void dispose() {
     _restoreJsonController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadSavedBackups() async {
+    try {
+      final appDir = await getApplicationDocumentsDirectory();
+      final backupDir = Directory('${appDir.path}/backups');
+      if (!await backupDir.exists()) return;
+      final files =
+          await backupDir
+                .list()
+                .where((e) => e is File && e.path.endsWith('.json'))
+                .cast<File>()
+                .toList()
+            ..sort((a, b) => b.path.compareTo(a.path));
+      if (mounted) {
+        setState(() => _savedBackups = files);
+      }
+    } catch (_) {}
   }
 
   Future<void> _handleCreateBackup() async {
@@ -51,14 +78,43 @@ class _BackupPageState extends ConsumerState<BackupPage> {
       final createBackup = ref.read(createBackupUseCaseProvider);
       final res = await createBackup(directoryPath: backupDir.path);
 
-      res.fold(
-        onOk: (path) {
-          setState(() => _lastCreatedPath = path);
+      await res.fold(
+        onOk: (path) async {
+          String? jsonContent;
+          String displayPath = path;
+          try {
+            jsonContent = await File(path).readAsString();
+            await Clipboard.setData(ClipboardData(text: jsonContent));
+          } catch (_) {}
+
+          // Intentar guardar copia adicional en la carpeta Descargas pública de Android
+          try {
+            final fileName = path.split(Platform.pathSeparator).last;
+            final downloadDir = Directory('/storage/emulated/0/Download');
+            if (await downloadDir.exists() && jsonContent != null) {
+              final publicFile = File('${downloadDir.path}/$fileName');
+              await publicFile.writeAsString(jsonContent, flush: true);
+              displayPath = publicFile.path;
+            }
+          } catch (_) {}
+
+          await _loadSavedBackups();
+          if (!mounted) return;
+          setState(() {
+            _lastCreatedPath = displayPath;
+            _lastCreatedJson = jsonContent;
+          });
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(l10n.backupCreatedSuccess(path))),
+            const SnackBar(
+              content: Text(
+                'Copia creada y JSON copiado automáticamente al portapapeles. Pégalo en un bloc de notas o chat para guardarlo.',
+              ),
+              duration: Duration(seconds: 5),
+            ),
           );
         },
-        onError: (failure) {
+        onError: (failure) async {
+          if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(failure.toLocalizedMessage(l10n))),
           );
@@ -243,14 +299,112 @@ class _BackupPageState extends ConsumerState<BackupPage> {
                 'Guardado: $_lastCreatedPath',
                 style: TextStyle(fontSize: 12, color: colors.onSurfaceMuted),
               ),
+              if (_lastCreatedJson != null) ...[
+                const SizedBox(height: 8),
+                OutlinedButton.icon(
+                  onPressed: () async {
+                    await Clipboard.setData(
+                      ClipboardData(text: _lastCreatedJson!),
+                    );
+                    if (!context.mounted) return;
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text(
+                          'JSON copiado al portapapeles. Pégalo en tus Notas o en WhatsApp.',
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Icons.copy_rounded, size: 18),
+                  label: const Text('Copiar JSON al portapapeles'),
+                ),
+              ],
+            ],
+            if (_savedBackups.isNotEmpty) ...[
+              const SizedBox(height: 20),
+              Text(
+                'Copias guardadas en este dispositivo',
+                style: Theme.of(context).textTheme.titleMedium
+                    ?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              ..._savedBackups.take(5).map((file) {
+                final name = file.path.split(Platform.pathSeparator).last;
+                return Card(
+                  margin: const EdgeInsets.only(bottom: 8),
+                  child: ListTile(
+                    dense: true,
+                    leading: Icon(
+                      Icons.description_outlined,
+                      color: colors.primary,
+                    ),
+                    title: Text(name, style: const TextStyle(fontSize: 13)),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          tooltip: 'Copiar JSON',
+                          icon: const Icon(Icons.copy_rounded, size: 18),
+                          onPressed: () async {
+                            final content = await file.readAsString();
+                            await Clipboard.setData(
+                              ClipboardData(text: content),
+                            );
+                            if (!context.mounted) return;
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  'JSON de $name copiado al portapapeles',
+                                ),
+                              ),
+                            );
+                          },
+                        ),
+                        IconButton(
+                          tooltip: 'Cargar para restaurar',
+                          icon: Icon(
+                            Icons.restore_rounded,
+                            size: 20,
+                            color: colors.primary,
+                          ),
+                          onPressed: () async {
+                            final content = await file.readAsString();
+                            setState(() {
+                              _restoreJsonController.text = content;
+                            });
+                            await _handleRestorePreview();
+                          },
+                        ),
+                      ],
+                    ),
+                  ),
+                );
+              }),
             ],
             const SizedBox(height: 28),
 
             // Restore section
-            Text(
-              l10n.backupRestoreFromFile,
-              style: Theme.of(context).textTheme.titleLarge
-                  ?.copyWith(fontSize: 18, fontWeight: FontWeight.bold),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  l10n.backupRestoreFromFile,
+                  style: Theme.of(context).textTheme.titleLarge
+                      ?.copyWith(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                TextButton.icon(
+                  onPressed: () async {
+                    final data = await Clipboard.getData(Clipboard.kTextPlain);
+                    if (data?.text != null && data!.text!.trim().isNotEmpty) {
+                      setState(() {
+                        _restoreJsonController.text = data.text!.trim();
+                      });
+                    }
+                  },
+                  icon: const Icon(Icons.content_paste_rounded, size: 18),
+                  label: const Text('Pegar'),
+                ),
+              ],
             ),
             const SizedBox(height: 8),
             TextField(
